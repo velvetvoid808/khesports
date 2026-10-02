@@ -1,0 +1,3009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>KH Esports — Admin</title>
+<style>
+    :root {
+        --bg: #07080d;
+        --panel: #0d0f16;
+        --border: rgba(255,255,255,0.1);
+        --border-soft: rgba(255,255,255,0.06);
+        --text: #f4f4f6;
+        --muted: #8b8d98;
+        --purple: #a855f7;
+        --cyan: #22d3ee;
+        --danger: #f87171;
+        --ok: #34d399;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 24px 16px 80px;
+    }
+
+    .wrap {
+        max-width: 980px;
+        margin: 0 auto;
+    }
+
+    header.top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+    }
+
+    header.top h1 {
+        font-size: 18px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin: 0;
+    }
+
+    header.top h1 span {
+        color: var(--purple);
+    }
+
+    #userBadge {
+        font-size: 13px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    button {
+        font-family: inherit;
+        cursor: pointer;
+    }
+
+    .btn {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,0.04);
+        color: var(--text);
+        padding: 10px 18px;
+        font-size: 13px;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        border-radius: 6px;
+        transition: border-color .2s ease, background .2s ease;
+    }
+
+    .btn:hover { border-color: var(--purple); }
+
+    .btn-primary {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, var(--purple), #7c3aed);
+        border-color: transparent;
+        font-weight: 600;
+        transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
+    }
+
+    .btn-primary:hover {
+        filter: brightness(1.08);
+        transform: translateY(-1px);
+        box-shadow: 0 10px 26px -10px rgba(168, 85, 247, 0.6);
+    }
+
+    /* Shine sweep — plays on genuine hover, and is replayed manually via
+       JS (the .sweep-now class) so a click/tap gets the same feedback
+       even on touch devices where :hover never fires. */
+    .btn-primary::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            115deg,
+            transparent 35%,
+            rgba(255, 255, 255, 0.4) 50%,
+            transparent 65%
+        );
+        background-size: 220% 100%;
+        background-position: 140% 0;
+        pointer-events: none;
+    }
+
+    .btn-primary:hover::after,
+    .btn-primary.sweep-now::after {
+        animation: btnShineSweep .8s ease;
+    }
+
+    @keyframes btnShineSweep {
+        from { background-position: 140% 0; }
+        to   { background-position: -60% 0; }
+    }
+
+    /* Label / loading-dots swap */
+    .btn-primary .btn-label {
+        display: inline-block;
+        transition: opacity .2s ease;
+    }
+
+    .btn-primary .btn-loader {
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+    }
+
+    .btn-primary.is-loading {
+        pointer-events: none;
+    }
+
+    .btn-primary.is-loading .btn-label { opacity: 0; }
+    .btn-primary.is-loading .btn-loader { display: flex; }
+
+    .btn-primary .btn-loader span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #fff;
+        opacity: 0.35;
+        animation: btnDotPulse .72s ease-in-out infinite;
+    }
+
+    .btn-primary .btn-loader span:nth-child(1) { animation-delay: 0s; }
+    .btn-primary .btn-loader span:nth-child(2) { animation-delay: .15s; }
+    .btn-primary .btn-loader span:nth-child(3) { animation-delay: .3s; }
+
+    @keyframes btnDotPulse {
+        0%, 60%, 100% { transform: scale(1);   opacity: .35; }
+        30%           { transform: scale(1.6); opacity: 1; }
+    }
+
+    /* A bright arc travels the button's border while it's loading —
+       reuses the same conic-gradient trace technique as the public
+       site's card hover, so the whole project shares one visual language. */
+    .btn-primary.is-loading::before {
+        content: "";
+        position: absolute;
+        inset: -1.5px;
+        border-radius: inherit;
+        padding: 1.5px;
+        background: conic-gradient(
+            from var(--kh-btn-angle, 0deg),
+            transparent 0%,
+            rgba(255, 255, 255, 0.95) 10%,
+            transparent 28%
+        );
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        animation: btnTraceSpin .9s linear infinite;
+    }
+
+    @keyframes btnTraceSpin {
+        to { --kh-btn-angle: 360deg; }
+    }
+
+    @property --kh-btn-angle {
+        syntax: '<angle>';
+        inherits: false;
+        initial-value: 0deg;
+    }
+
+    .btn-ghost {
+        background: transparent;
+        border-color: var(--border-soft);
+        color: var(--muted);
+    }
+
+    /* ---------- Ambient page glow (lit by the lamp) ---------- */
+
+    body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        background: radial-gradient(
+            ellipse 780px 620px at 50% 0%,
+            rgba(255, 189, 107, 0.18),
+            transparent 68%
+        );
+        opacity: 0;
+        transition: opacity 1.1s ease;
+    }
+
+    body.lit::before { opacity: 1; }
+
+    .wrap { position: relative; z-index: 1; }
+
+    #topHeader {
+        opacity: 0;
+        transform: translateY(-6px);
+        pointer-events: none;
+        transition: opacity .7s ease, transform .7s ease;
+    }
+
+    body.lit #topHeader,
+    body.dashboard-active #topHeader {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+
+    /* ---------- Lamp intro ---------- */
+
+    #introLamp {
+        text-align: center;
+        margin: 4vh auto 0;
+        position: relative;
+    }
+
+    #lampFixture {
+        width: 150px;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+        position: relative;
+        z-index: 2;
+        filter: drop-shadow(0 0 0 transparent);
+        transition: filter 1s ease;
+    }
+
+    body.lit #lampFixture {
+        filter: drop-shadow(0 10px 24px rgba(255, 180, 84, 0.3));
+    }
+
+    /* The lamp's light — one single coherent shape: a soft volumetric
+       beam that widens as it falls, built from a radial gradient (so it
+       still has that natural soft "glow" falloff) clipped into a gently
+       flared cone and heavily blurred so the edge is never hard-edged
+       or cartoonish. This is the only light shape in the scene — no
+       second overlapping wash — so it reads as one real light source. */
+    #lightShaft {
+        position: absolute;
+        top: 46px;
+        left: 50%;
+        width: 520px;
+        max-width: 155vw;
+        height: 660px;
+        transform: translateX(-50%);
+        clip-path: polygon(48.5% 0%, 51.5% 0%, 94% 100%, 6% 100%);
+        background: radial-gradient(
+            ellipse 55% 32% at 50% 0%,
+            rgba(255, 236, 196, 0.62),
+            rgba(255, 210, 140, 0.28) 38%,
+            rgba(255, 180, 84, 0.10) 62%,
+            transparent 84%
+        );
+        filter: blur(24px);
+        opacity: 0;
+        transition: opacity 1.3s ease;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    body.lit #lightShaft { opacity: 1; }
+
+    .under-glow {
+        opacity: 0;
+        transition: opacity .6s ease;
+    }
+
+    body.lit .under-glow { opacity: 1; }
+
+    .rim-glow {
+        opacity: 0;
+        transition: opacity .6s ease;
+    }
+
+    body.lit .rim-glow { opacity: 0.85; }
+
+    #bulbGlowCircle {
+        opacity: 0;
+        transition: opacity .6s ease;
+    }
+
+    body.lit #bulbGlowCircle { opacity: 1; }
+
+    #bulbCore {
+        fill: #57534a;
+        transition: fill .5s ease;
+    }
+
+    body.lit #bulbCore { fill: #fff3d0; }
+
+    /* Fireflies — small drifting embers, only alive once the lamp is lit */
+    #fireflies {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        width: 520px;
+        max-width: 140vw;
+        height: 480px;
+        transform: translateX(-50%);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    #fireflies span {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: #ffdca3;
+        box-shadow: 0 0 6px 2px rgba(255, 200, 130, 0.8);
+        opacity: 0;
+        transition: opacity 1s ease;
+    }
+
+    body.lit #fireflies span {
+        opacity: 0.85;
+        animation-timing-function: ease-in-out;
+        animation-iteration-count: infinite;
+    }
+
+    #fireflies span:nth-child(1)  { left: 12%; top: 30%; animation-delay: .2s; }
+    #fireflies span:nth-child(2)  { left: 82%; top: 22%; animation-delay: 1.1s; }
+    #fireflies span:nth-child(3)  { left: 25%; top: 55%; animation-delay: .6s; }
+    #fireflies span:nth-child(4)  { left: 70%; top: 48%; animation-delay: 1.8s; }
+    #fireflies span:nth-child(5)  { left: 45%; top: 68%; animation-delay: .9s; }
+    #fireflies span:nth-child(6)  { left: 58%; top: 15%; animation-delay: 2.3s; }
+    #fireflies span:nth-child(7)  { left: 18%; top: 75%; animation-delay: 1.4s; }
+    #fireflies span:nth-child(8)  { left: 90%; top: 62%; animation-delay: .4s; }
+    #fireflies span:nth-child(9)  { left: 36%; top: 40%; animation-delay: 2.6s; }
+    #fireflies span:nth-child(10) { left: 63%; top: 80%; animation-delay: 1.6s; }
+
+    body.lit #fireflies span:nth-child(1)  { animation: fireflyA 9s   ease-in-out infinite; animation-delay: .2s; }
+    body.lit #fireflies span:nth-child(2)  { animation: fireflyB 7.5s ease-in-out infinite; animation-delay: 1.1s; }
+    body.lit #fireflies span:nth-child(3)  { animation: fireflyC 10s  ease-in-out infinite; animation-delay: .6s; }
+    body.lit #fireflies span:nth-child(4)  { animation: fireflyD 8.5s ease-in-out infinite; animation-delay: 1.8s; }
+    body.lit #fireflies span:nth-child(5)  { animation: fireflyE 9.5s ease-in-out infinite; animation-delay: .9s; }
+    body.lit #fireflies span:nth-child(6)  { animation: fireflyA 7s   ease-in-out infinite; animation-delay: 2.3s; }
+    body.lit #fireflies span:nth-child(7)  { animation: fireflyC 10.5s ease-in-out infinite; animation-delay: 1.4s; }
+    body.lit #fireflies span:nth-child(8)  { animation: fireflyD 7.8s ease-in-out infinite; animation-delay: .4s; }
+    body.lit #fireflies span:nth-child(9)  { animation: fireflyB 9.2s ease-in-out infinite; animation-delay: 2.6s; }
+    body.lit #fireflies span:nth-child(10) { animation: fireflyE 8s   ease-in-out infinite; animation-delay: 1.6s; }
+
+    /* Five distinct wander paths — each loops back to its own start point
+       via a different, irregular route so the particles read as scattering
+       every which way rather than all swaying together. */
+    @keyframes fireflyA {
+        0%   { transform: translate(0, 0);        opacity: 0.2; }
+        18%  { opacity: 0.9; }
+        30%  { transform: translate(22px, -16px); }
+        55%  { transform: translate(6px, -38px);  opacity: 0.4; }
+        72%  { opacity: 0.85; }
+        86%  { transform: translate(-16px, -14px); }
+        100% { transform: translate(0, 0);        opacity: 0.2; }
+    }
+
+    @keyframes fireflyB {
+        0%   { transform: translate(0, 0);        opacity: 0.2; }
+        22%  { transform: translate(-26px, 10px); opacity: 0.85; }
+        44%  { transform: translate(-14px, 32px); }
+        68%  { transform: translate(18px, 24px);  opacity: 0.35; }
+        85%  { opacity: 0.8; }
+        100% { transform: translate(0, 0);        opacity: 0.2; }
+    }
+
+    @keyframes fireflyC {
+        0%   { transform: translate(0, 0) scale(1);         opacity: 0.25; }
+        20%  { transform: translate(18px, 14px) scale(1.15); opacity: 0.85; }
+        48%  { transform: translate(34px, -6px) scale(0.9); }
+        70%  { transform: translate(12px, -30px) scale(1.1); opacity: 0.4; }
+        90%  { opacity: 0.8; }
+        100% { transform: translate(0, 0) scale(1);          opacity: 0.25; }
+    }
+
+    @keyframes fireflyD {
+        0%   { transform: translate(0, 0);         opacity: 0.2; }
+        26%  { transform: translate(-20px, -28px); opacity: 0.9; }
+        50%  { transform: translate(2px, -46px);   opacity: 0.3; }
+        74%  { transform: translate(20px, -22px);  opacity: 0.75; }
+        100% { transform: translate(0, 0);          opacity: 0.2; }
+    }
+
+    @keyframes fireflyE {
+        0%   { transform: translate(0, 0);        opacity: 0.2; }
+        24%  { transform: translate(24px, 20px);  opacity: 0.85; }
+        46%  { transform: translate(6px, 38px); }
+        68%  { transform: translate(-22px, 16px); opacity: 0.4; }
+        88%  { opacity: 0.8; }
+        100% { transform: translate(0, 0);        opacity: 0.2; }
+    }
+
+    #pullCord {
+        appearance: none;
+        background: none;
+        border: none;
+        padding: 6px 22px 14px;
+        margin: -10px auto 0;
+        display: flex;
+        cursor: pointer;
+        position: relative;
+        z-index: 2;
+    }
+
+    .cord-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transform-origin: top center;
+    }
+
+    .cord-line {
+        width: 2px;
+        height: 42px;
+        background: linear-gradient(to bottom, #4a4a54, #2c2c33);
+    }
+
+    .cord-bead {
+        width: 11px;
+        height: 18px;
+        border-radius: 5px;
+        margin-top: -2px;
+        background: linear-gradient(135deg, #57575f, #26262c);
+        border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    #pullCord.pulling .cord-inner {
+        animation: cordPull .6s cubic-bezier(.34,1.4,.4,1);
+    }
+
+    @keyframes cordPull {
+        0%   { transform: translateY(0); }
+        28%  { transform: translateY(16px); }
+        55%  { transform: translateY(-5px); }
+        78%  { transform: translateY(3px); }
+        100% { transform: translateY(0); }
+    }
+
+    #pullHint {
+        color: var(--muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin: 2px 0 0;
+        opacity: 0.55;
+        animation: hintPulse 2.2s ease-in-out infinite;
+        transition: opacity .4s ease;
+    }
+
+    body.lit #pullHint {
+        opacity: 0;
+        animation: none;
+    }
+
+    @keyframes hintPulse {
+        0%, 100% { opacity: 0.35; }
+        50% { opacity: 0.75; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        #pullCord.pulling .cord-inner { animation: none; }
+        #pullHint { animation: none; }
+        #fireflies span { animation: none !important; opacity: 0.6; }
+        .btn-primary::after { animation: none !important; }
+        .btn-primary:hover { transform: none; }
+        .btn-primary.is-loading::before { animation: none !important; }
+        .btn-primary .btn-loader span { animation-duration: .3s !important; }
+        body::before,
+        #topHeader,
+        #lampFixture,
+        #lightShaft,
+        .under-glow,
+        .rim-glow,
+        #bulbGlowCircle,
+        #bulbCore,
+        #loginScreen {
+            transition-duration: .15s !important;
+        }
+    }
+
+    /* ---------- Login screen ---------- */
+
+    #loginScreen {
+        position: relative;
+        z-index: 3;
+        max-width: 380px;
+        margin: 30px auto 0;
+        opacity: 0;
+        transform: translateY(18px) scale(0.98);
+        pointer-events: none;
+        transition: opacity .7s ease .1s, transform .7s cubic-bezier(.22,1,.36,1) .1s;
+    }
+
+    body.lit #loginScreen {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+    }
+
+    .login-card {
+        position: relative;
+        z-index: 2;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        border-radius: 12px;
+        padding: 34px 32px;
+        text-align: center;
+        box-shadow: 0 0 0 rgba(255,180,84,0);
+        transition: box-shadow 1.1s ease, border-color 1.1s ease;
+    }
+
+    body.lit .login-card {
+        border-color: rgba(255, 200, 130, 0.22);
+        box-shadow:
+            0 -30px 90px -24px rgba(255, 180, 84, 0.22),
+            0 0 60px -12px rgba(255, 180, 84, 0.12);
+    }
+
+    #loginScreen h2 {
+        margin: 0 0 6px;
+        font-size: 20px;
+    }
+
+    #loginScreen p.sub {
+        margin: 0 0 26px;
+        color: var(--muted);
+        font-size: 13px;
+    }
+
+    .field {
+        margin-bottom: 16px;
+        text-align: left;
+    }
+
+    .field label {
+        display: block;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+        margin-bottom: 6px;
+    }
+
+    .input-icon {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-icon svg {
+        position: absolute;
+        left: 12px;
+        width: 16px;
+        height: 16px;
+        color: var(--muted);
+        pointer-events: none;
+    }
+
+    .field input {
+        width: 100%;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 10px 12px 10px 38px;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+    .field input:focus {
+        outline: none;
+        border-color: var(--cyan);
+    }
+
+    .field input:focus ~ svg,
+    .input-icon:focus-within svg {
+        color: var(--cyan);
+    }
+
+    #loginScreen .btn-primary {
+        width: 100%;
+        padding: 12px;
+        margin-top: 8px;
+    }
+
+    .msg {
+        font-size: 13px;
+        margin-top: 14px;
+        min-height: 18px;
+    }
+
+    .msg.error { color: var(--danger); }
+    .msg.ok { color: var(--ok); }
+
+    /* =========================================================
+       LOGIN SUCCESS CINEMATIC — flicker, suck-in, vortex
+    ========================================================= */
+
+    #preAuthScene {
+        transition:
+            opacity .2s linear;
+        transform-origin: var(--portal-origin, 50% 38%);
+        transform-style: preserve-3d;
+    }
+
+    body.portal-sucking #preAuthScene {
+        transition: none;
+        pointer-events: none;
+    }
+
+    body.portal-sucking .wrap {
+        perspective: 1240px;
+        perspective-origin: var(--world-origin, 50% 50%);
+        transform-style: preserve-3d;
+        pointer-events: none;
+    }
+
+    body.portal-sucking #topHeader {
+        position: relative;
+        z-index: 3;
+        transform-origin: center;
+        transform-style: preserve-3d;
+        pointer-events: none;
+        transition: none;
+    }
+
+    body.portal-flicker #lightShaft,
+    body.portal-flicker #bulbGlowCircle,
+    body.portal-flicker #bulbCore,
+    body.portal-flicker .under-glow,
+    body.portal-flicker .rim-glow {
+        opacity: var(--lamp-flicker, 1);
+        filter: brightness(var(--lamp-bloom, 1));
+        transition: none !important;
+    }
+
+    body.portal-flicker::before {
+        opacity: var(--ambient-flicker, .08);
+        transition: none !important;
+    }
+
+    body.portal-sucking #introLamp {
+        transform-style: preserve-3d;
+    }
+
+    body.portal-sucking #pullCord .cord-inner {
+        transform-style: preserve-3d;
+    }
+
+    body.portal-sucking #loginScreen .login-card {
+        transform-origin: 50% 50%;
+        transform-style: preserve-3d;
+        backface-visibility: hidden;
+    }
+
+    body.portal-sucking #loginScreen {
+        transform-style: preserve-3d;
+    }
+
+    #vortex {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: min(480px, 84vw, 58vh);
+        aspect-ratio: 1;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 90;
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(.08);
+        transition: transform .48s cubic-bezier(.16,1,.3,1), opacity .2s ease;
+        filter: drop-shadow(0 0 34px rgba(126, 34, 206, .36));
+        isolation: isolate;
+    }
+
+    #vortex,
+    #gravityLens,
+    #spaceRift {
+        display: none !important;
+    }
+
+    #cinematicCanvas {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: none;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+    }
+
+    .vortex-art {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+    }
+
+    #gravityLens {
+        position: fixed;
+        z-index: 74;
+        inset: -12%;
+        pointer-events: none;
+        opacity: 0;
+        background:
+            radial-gradient(ellipse at var(--rift-x, 50%) var(--rift-y, 50%), transparent 0 11%, rgba(191,145,255,.12) 15%, transparent 28%),
+            conic-gradient(from 15deg at var(--rift-x, 50%) var(--rift-y, 50%), transparent 0 17%, rgba(174,116,230,.11) 23%, transparent 31%, rgba(105,47,150,.09) 44%, transparent 55%, rgba(206,160,255,.1) 69%, transparent 81%);
+        mix-blend-mode: screen;
+        filter: blur(10px) contrast(1.15);
+        transform-origin: var(--rift-x, 50%) var(--rift-y, 50%);
+    }
+
+    body.portal-fracture #gravityLens {
+        opacity: .94;
+        animation: lensFracture .85s ease-out both;
+    }
+
+    body.portal-open #gravityLens {
+        opacity: .6;
+        animation: lensOpen 2.1s ease-out both;
+    }
+
+    body.portal-sucking #gravityLens {
+        opacity: .78;
+        animation: lensDrawIn 2.8s cubic-bezier(.32,0,.9,.36) both;
+    }
+
+    body.portal-closing #gravityLens {
+        opacity: 0;
+        animation: lensImplode 1.08s cubic-bezier(.6,0,.96,.28) both;
+    }
+
+    #spaceRift {
+        position: fixed;
+        z-index: 82;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        pointer-events: none;
+        overflow: hidden;
+        filter: drop-shadow(0 0 12px rgba(216,180,254,.86));
+    }
+
+    #spaceRift path {
+        fill: none;
+        stroke: url(#riftEdge);
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-dasharray: 0 1200;
+        filter: url(#riftGlow);
+    }
+
+    body.portal-fracture #spaceRift {
+        opacity: 1;
+    }
+
+    body.portal-fracture #spaceRift path {
+        animation: crackOpen .76s cubic-bezier(.14,.78,.24,1) both;
+    }
+
+    body.portal-fracture .wrap {
+        animation: cameraRupture .76s cubic-bezier(.16,.82,.24,1) both;
+    }
+
+    body.portal-open #spaceRift {
+        opacity: .58;
+        transition: opacity .7s ease .2s;
+    }
+
+    body.portal-sucking #spaceRift {
+        opacity: .08;
+        transform: scale(.82) rotate(-6deg);
+        transition: transform 2.4s cubic-bezier(.38,0,.88,.42), opacity 1.2s ease;
+    }
+
+    body.portal-closing #spaceRift {
+        opacity: 0;
+        transform: scale(.03) rotate(64deg);
+        transition: transform 1s cubic-bezier(.55,0,.95,.28), opacity .72s ease;
+    }
+
+    .space-ripple {
+        fill: none;
+        stroke: rgba(221, 187, 255, .62);
+        stroke-width: 1.6;
+        opacity: 0;
+        filter: url(#spaceWarp);
+        transform-origin: 300px 300px;
+    }
+
+    body.portal-open .space-ripple {
+        animation: spacetimeRipple 1.45s cubic-bezier(.16,.72,.3,1) both;
+    }
+
+    .space-fracture {
+        fill: none;
+        stroke: url(#photonGlow);
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        opacity: 0;
+        filter: url(#ringGlow);
+    }
+
+    body.portal-open .space-fracture {
+        animation: spaceTear 1.5s cubic-bezier(.16,.72,.3,1) both;
+    }
+
+    body.portal-closing .space-ripple {
+        animation: collapseRipple 1.1s cubic-bezier(.32,0,.72,.22) both;
+    }
+
+    body.portal-closing .energy-flash {
+        animation: collapseDischarge .9s ease-in both;
+    }
+
+    .debris-cloud {
+        transform-box: view-box;
+        transform-origin: 50% 50%;
+        animation: debrisOrbit 14s linear infinite;
+    }
+
+    .debris-particle {
+        fill: #f1ddff;
+        filter: url(#ringGlow);
+        animation: particleGlint 2.6s ease-in-out infinite alternate;
+    }
+
+    .debris-particle:nth-child(2n) { animation-delay: -.8s; }
+    .debris-particle:nth-child(3n) { animation-delay: -1.6s; }
+
+    .plasma-cloud {
+        opacity: .35;
+        filter: url(#plasmaDistortion);
+        animation: cloudDrift 8s ease-in-out infinite alternate;
+    }
+
+    .space-debris {
+        fill: #ead7ff;
+        filter: url(#ringGlow);
+        animation: debrisOrbit 4.8s linear infinite;
+    }
+
+    .plasma-stream {
+        fill: none;
+        stroke: url(#diskLight);
+        stroke-linecap: round;
+        stroke-dasharray: 9 13 38 17;
+        animation: streamFlow 3.4s linear infinite;
+    }
+
+    .plasma-stream.stream-fast {
+        stroke-width: 8;
+        animation-duration: 1.9s;
+    }
+
+    .plasma-stream.stream-mid {
+        stroke-width: 15;
+        opacity: .82;
+        animation-duration: 3s;
+        animation-direction: reverse;
+    }
+
+    .plasma-stream.stream-wide {
+        stroke-width: 25;
+        opacity: .58;
+        animation-duration: 5.2s;
+    }
+
+    .plasma-wisp {
+        fill: none;
+        stroke: url(#diskHeat);
+        stroke-linecap: round;
+        filter: url(#plasmaDistortion);
+    }
+
+    .photon-ring {
+        fill: none;
+        stroke: url(#photonGlow);
+        stroke-width: 7;
+        stroke-dasharray: 176 22 38 18;
+        filter: url(#ringGlow);
+        animation: photonDrift 5s ease-in-out infinite alternate;
+    }
+
+    .energy-flash {
+        fill: none;
+        stroke: #d8b4fe;
+        stroke-width: 2;
+        stroke-linecap: round;
+        opacity: 0;
+        filter: url(#ringGlow);
+        animation: energyDischarge 4.8s ease-in-out infinite;
+    }
+
+    .energy-flash:nth-of-type(2) { animation-delay: -1.7s; }
+    .energy-flash:nth-of-type(3) { animation-delay: -3.2s; }
+
+    @keyframes streamFlow {
+        to { stroke-dashoffset: -154px; }
+    }
+
+    @keyframes photonDrift {
+        from { stroke-dashoffset: 0; opacity: .65; }
+        to   { stroke-dashoffset: -34px; opacity: 1; }
+    }
+
+    @keyframes energyDischarge {
+        0%, 76%, 100% { opacity: 0; }
+        77% { opacity: .08; }
+        78% { opacity: 1; }
+        79% { opacity: .28; }
+        80% { opacity: .94; }
+        82% { opacity: .06; }
+        84% { opacity: .72; }
+        87% { opacity: 0; }
+    }
+
+    @keyframes spacetimeRipple {
+        0% { opacity: 0; transform: scale(.16) rotate(0); stroke-width: 3; }
+        22% { opacity: .94; }
+        72% { opacity: .5; transform: scale(1.08) rotate(16deg); stroke-width: 1.2; }
+        100% { opacity: 0; transform: scale(1.2) rotate(24deg); stroke-width: .5; }
+    }
+
+    @keyframes spaceTear {
+        0%, 100% { opacity: 0; stroke-dasharray: 0 600; }
+        18% { opacity: 1; stroke-dasharray: 600 0; }
+        50% { opacity: .86; }
+        82% { opacity: .22; }
+    }
+
+    @keyframes collapseRipple {
+        0% { opacity: .72; transform: scale(1) rotate(0); stroke-width: 1; }
+        48% { opacity: .92; transform: scale(.62) rotate(-15deg); stroke-width: 3; }
+        100% { opacity: 0; transform: scale(.025) rotate(32deg); stroke-width: 8; }
+    }
+
+    @keyframes collapseDischarge {
+        0%, 48%, 100% { opacity: 0; }
+        58% { opacity: 1; }
+        62% { opacity: .12; }
+        68% { opacity: .82; }
+        74% { opacity: 0; }
+    }
+
+    @keyframes debrisOrbit {
+        to { transform: rotate(360deg) scaleY(.94); }
+    }
+
+    @keyframes particleGlint {
+        from { opacity: .18; }
+        to { opacity: .92; }
+    }
+
+    @keyframes cloudDrift {
+        from { opacity: .18; transform: translateX(-8px) scaleY(.92); }
+        to { opacity: .48; transform: translateX(8px) scaleY(1.06); }
+    }
+
+    @keyframes portalIgnition {
+        0%   { opacity: 0; transform: translate(-50%, -50%) scale(.001); filter: brightness(3) drop-shadow(0 0 48px rgba(192,132,252,.85)); }
+        16%  { opacity: 1; transform: translate(-50%, -50%) scale(.08); filter: brightness(2.6) drop-shadow(0 0 58px rgba(192,132,252,.95)); }
+        48%  { opacity: 1; transform: translate(-50%, -50%) scale(.54); filter: brightness(1.8) drop-shadow(0 0 46px rgba(168,85,247,.74)); }
+        78%  { opacity: 1; transform: translate(-50%, -50%) scale(1.07); filter: brightness(1.3) drop-shadow(0 0 40px rgba(126,34,206,.52)); }
+        90%  { opacity: .94; transform: translate(-50%, -50%) scale(.97); }
+        100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+
+    @keyframes portalCollapse {
+        0%   { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); filter: brightness(1); }
+        20%  { opacity: 1; transform: translate(-50%, -50%) scale(1.04,.94) rotate(-9deg); filter: brightness(1.4); }
+        42%  { opacity: 1; transform: translate(-50%, -50%) scale(.76,.64) rotate(24deg); filter: brightness(2.1); }
+        68%  { opacity: .96; transform: translate(-50%, -50%) scale(.4,.32) rotate(-44deg); filter: brightness(3.2) blur(1px); }
+        86%  { opacity: .84; transform: translate(-50%, -50%) scale(.16,.12) rotate(76deg); filter: brightness(4.5) blur(3px); }
+        95%  { opacity: .72; transform: translate(-50%, -50%) scale(.07,.05) rotate(-104deg); filter: brightness(6) blur(2px); }
+        100% { opacity: 0; transform: translate(-50%, -50%) scale(.001) rotate(180deg); filter: brightness(8) blur(9px); }
+    }
+
+    @keyframes lensFracture {
+        0% { opacity: 0; transform: scale(.2) rotate(0); }
+        28% { opacity: 1; transform: scale(1.04) rotate(6deg); }
+        100% { opacity: .42; transform: scale(1.18) rotate(-8deg); }
+    }
+
+    @keyframes lensOpen {
+        0% { opacity: 0; transform: scale(.1) rotate(0); }
+        45% { opacity: .9; transform: scale(1.08) rotate(8deg); }
+        100% { opacity: .44; transform: scale(1) rotate(-6deg); }
+    }
+
+    @keyframes lensDrawIn {
+        0% { opacity: .45; transform: scale(1) rotate(0); }
+        58% { opacity: .88; transform: scale(.74) rotate(32deg); }
+        100% { opacity: .2; transform: scale(.12) rotate(116deg); }
+    }
+
+    @keyframes lensImplode {
+        0% { opacity: .8; transform: scale(1) rotate(0); filter: blur(10px) brightness(1); }
+        74% { opacity: 1; transform: scale(.12) rotate(-72deg); filter: blur(2px) brightness(3); }
+        92% { opacity: 1; transform: scale(.018) rotate(48deg); filter: blur(0) brightness(8); }
+        100% { opacity: 0; transform: scale(0) rotate(180deg); filter: blur(18px) brightness(12); }
+    }
+
+    @keyframes crackOpen {
+        0% { opacity: 0; stroke-dasharray: 0 1200; }
+        12% { opacity: 1; }
+        54% { opacity: 1; stroke-dasharray: 1200 0; }
+        78% { opacity: .86; }
+        100% { opacity: 0; stroke-dasharray: 1200 0; }
+    }
+
+    @keyframes cameraRupture {
+        0%, 100% { transform: translate(0,0) rotate(0); }
+        8% { transform: translate(-8px,3px) rotate(-.25deg); }
+        16% { transform: translate(10px,-5px) rotate(.32deg); }
+        26% { transform: translate(-6px,-2px) rotate(-.18deg); }
+        37% { transform: translate(4px,4px) rotate(.12deg); }
+        51% { transform: translate(-3px,1px) rotate(-.08deg); }
+        68% { transform: translate(2px,-2px) rotate(.05deg); }
+    }
+
+    body.portal-open #vortex {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+        animation: portalIgnition 1.9s cubic-bezier(.16,.82,.24,1) both;
+    }
+
+    body.portal-closing #vortex {
+        animation: portalCollapse 1.08s cubic-bezier(.48,0,.84,.28) both;
+    }
+
+    /* Reduced motion: no strobing, no spinning vortex — a plain, brief
+       cross-fade straight to the dashboard instead. */
+    @media (prefers-reduced-motion: reduce) {
+        body.portal-flicker #introLamp,
+        body.portal-flicker::before {
+            transition: none !important;
+        }
+        #preAuthScene { transition-duration: .25s !important; }
+        body.portal-sucking .wrap,
+        body.portal-sucking #preAuthScene,
+        body.portal-sucking #topHeader,
+        body.portal-sucking #introLamp,
+        body.portal-sucking #pullCord .cord-inner,
+        body.portal-sucking #loginScreen .login-card {
+            animation-duration: .25s !important;
+        }
+        #vortex,
+        body.portal-fracture .wrap,
+        .plasma-stream,
+        .photon-ring,
+        .energy-flash,
+        .space-ripple,
+        .space-fracture,
+        .debris-cloud,
+        .debris-particle,
+        .plasma-cloud,
+        #gravityLens,
+        #spaceRift path {
+            animation: none !important;
+            transition-duration: .25s !important;
+        }
+    }
+
+    /* ---------- Dashboard ---------- */
+
+    #dashboard {
+        display: none;
+        opacity: 0;
+        transform: translateY(18px);
+        transition: opacity .8s ease, transform .8s cubic-bezier(.22,1,.36,1);
+    }
+
+    body.dashboard-active #dashboard {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .tabs {
+        display: flex;
+        gap: 8px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 24px;
+    }
+
+    .tab-btn {
+        background: none;
+        border: none;
+        color: var(--muted);
+        padding: 12px 4px;
+        margin-right: 20px;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-bottom: 2px solid transparent;
+    }
+
+    .tab-btn.active {
+        color: var(--text);
+        border-bottom-color: var(--purple);
+    }
+
+    .game-panel { display: none; }
+    .game-panel.active { display: block; }
+
+    .block-title {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--purple);
+        margin: 32px 0 14px;
+    }
+
+    .block-title:first-of-type { margin-top: 0; }
+
+    .group-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 12px;
+    }
+
+    .group-box {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 14px;
+        background: var(--panel);
+    }
+
+    .group-box h4 {
+        margin: 0 0 10px;
+        font-size: 12px;
+        color: var(--cyan);
+        letter-spacing: 0.05em;
+    }
+
+    .group-box input {
+        width: 100%;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border-soft);
+        color: var(--text);
+        padding: 8px 10px;
+        border-radius: 5px;
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+
+    .group-box input:last-child { margin-bottom: 0; }
+
+    .group-box input:focus {
+        outline: none;
+        border-color: var(--purple);
+    }
+
+    .match-row {
+        display: grid;
+        grid-template-columns: 90px 1fr 1fr;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .match-row.champion-row {
+        grid-template-columns: 90px 1fr;
+    }
+
+    .match-row .match-label {
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .match-row input {
+        width: 100%;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border-soft);
+        color: var(--text);
+        padding: 9px 10px;
+        border-radius: 5px;
+        font-size: 13px;
+    }
+
+    .match-row input:focus {
+        outline: none;
+        border-color: var(--purple);
+    }
+
+    .save-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-top: 32px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-soft);
+    }
+
+    .hint {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+        margin: 0 0 20px;
+    }
+
+/* Advertisement editor */
+.ad-admin-nav{margin-top:18px}.ad-admin-tab{border:1px solid rgba(168,85,247,.35);background:linear-gradient(110deg,rgba(168,85,247,.12),rgba(34,211,238,.06));color:var(--text);padding:11px 16px;border-radius:7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px;cursor:pointer}.ad-admin-tab.active{border-color:rgba(168,85,247,.75);box-shadow:0 0 24px rgba(168,85,247,.12)}
+.ad-admin-panel{margin-top:16px;padding:22px;border:1px solid var(--border);background:rgba(255,255,255,.025);border-radius:10px}.ad-admin-panel[hidden]{display:none}.ad-settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.ad-field{display:flex;flex-direction:column;gap:7px}.ad-field.full{grid-column:1/-1}.ad-field label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}.ad-field input,.ad-field select,.ad-field textarea{width:100%;background:rgba(255,255,255,.035);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:10px 11px;font:inherit}.ad-field textarea{min-height:90px;resize:vertical}.ad-toggle{display:flex;gap:12px;align-items:center}.ad-toggle input{width:18px;height:18px}.ad-builder-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:22px 0 12px}.ad-builder-head h3{font-size:13px;text-transform:uppercase;letter-spacing:.1em;margin:0}.ad-row-editor{border:1px dashed rgba(255,255,255,.13);padding:12px;border-radius:9px;margin-bottom:12px;background:rgba(0,0,0,.12)}.ad-row-editor-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.1em}.ad-row-drop{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px;min-height:76px}.ad-block-editor{grid-column:span 12;border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:12px;background:rgba(255,255,255,.025);cursor:grab}.ad-block-editor:active{cursor:grabbing}.ad-block-editor[data-width="w25"]{grid-column:span 3}.ad-block-editor[data-width="w33"]{grid-column:span 4}.ad-block-editor[data-width="w50"]{grid-column:span 6}.ad-block-editor[data-width="w67"]{grid-column:span 8}.ad-block-editor[data-width="w100"]{grid-column:span 12}.ad-block-top{display:flex;justify-content:space-between;align-items:center;gap:8px}.ad-block-type{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#c084fc}.ad-block-actions{display:flex;gap:6px}.ad-mini-btn{border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--text);padding:5px 8px;border-radius:5px;cursor:pointer;font-size:11px}.ad-mini-btn:hover{border-color:var(--purple)}.ad-block-editor input,.ad-block-editor select{margin-top:8px;width:100%;background:rgba(255,255,255,.035);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:5px}.ad-block-editor textarea{margin-top:8px;width:100%;min-height:75px;resize:vertical;background:rgba(255,255,255,.035);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:5px}.ad-inline{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.ad-checks{display:flex;gap:12px;align-items:center;margin-top:8px;font-size:11px;color:var(--muted)}.ad-preview{margin-top:18px;padding:16px;border:1px solid var(--border);border-radius:9px;background:#07080d}.ad-preview-title{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px}.ad-save{margin-top:18px;display:flex;align-items:center;gap:12px}.ad-image-preview{max-width:160px;max-height:80px;object-fit:contain;margin-top:8px;border-radius:5px;border:1px solid var(--border)}
+
+.ad-help{display:block;margin-top:5px;color:var(--muted);font-size:11px;line-height:1.45}.ad-empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:130px;padding:24px;border:1px dashed rgba(255,255,255,.14);border-radius:9px;color:var(--muted);text-align:center}.ad-empty-state strong{color:var(--text)}.ad-row-editor-head>div:first-child{display:flex;align-items:center;gap:10px}.ad-row-editor-head small{font-size:9px;letter-spacing:.04em;text-transform:none;color:#6f7685}.ad-row-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.ad-mini-btn:disabled{opacity:.3;cursor:not-allowed}.ad-mini-btn.danger{border-color:rgba(248,113,113,.22);color:#fca5a5}.ad-block-heading{display:flex;align-items:center;gap:8px}.ad-block-drag{color:#7e8491;font-size:16px;line-height:1}.ad-block-editor{transition:border-color .18s ease,box-shadow .18s ease,opacity .18s ease,transform .18s ease}.ad-block-editor:hover{border-color:rgba(168,85,247,.35);box-shadow:0 8px 24px rgba(0,0,0,.16)}.ad-block-editor.is-dragging{opacity:.45;transform:scale(.99)}.ad-block-editor.ad-drop-target,.ad-row-drop.ad-drop-target{border-color:rgba(34,211,238,.7);box-shadow:0 0 0 2px rgba(34,211,238,.08) inset}.ad-row-drop.ad-drop-target{background:rgba(34,211,238,.035)}.ad-block-controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}.ad-block-controls label,.ad-block-editor>label{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.08em}.ad-block-controls select,.ad-block-editor>label input{margin-top:0}.ad-text-input{margin-top:9px}.ad-upload-area{display:grid;grid-template-columns:auto auto 1fr;align-items:center;gap:8px;margin-top:9px}.ad-upload-btn{display:inline-flex!important;flex-direction:row!important;align-items:center;justify-content:center;cursor:pointer;padding:9px 12px;border:1px solid rgba(168,85,247,.35);border-radius:6px;background:rgba(168,85,247,.08);color:var(--text)!important;font-size:10px!important;letter-spacing:.06em!important}.ad-upload-btn input{display:none}.ad-upload-area>span{font-size:10px;color:var(--muted);text-align:center}.ad-image-placeholder{margin-top:8px;padding:22px;border:1px dashed rgba(255,255,255,.1);border-radius:6px;color:#656c79;text-align:center;font-size:11px}.ad-countdown-hint{margin-top:7px;color:var(--muted);font-size:10px;line-height:1.45}.ad-block-chooser{position:absolute;z-index:20;right:12px;top:38px;width:min(330px,calc(100vw - 56px));padding:10px;border:1px solid rgba(168,85,247,.3);border-radius:10px;background:rgba(11,13,19,.98);box-shadow:0 18px 50px rgba(0,0,0,.45);backdrop-filter:blur(16px)}.ad-row-editor-head{position:relative}.ad-chooser-title{padding:4px 6px 8px;color:var(--muted);font-size:9px;letter-spacing:.12em;text-transform:uppercase}.ad-block-chooser button{display:flex;width:100%;flex-direction:column;gap:3px;text-align:left;padding:10px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--text);cursor:pointer}.ad-block-chooser button:hover{border-color:rgba(168,85,247,.3);background:rgba(168,85,247,.08)}.ad-block-chooser button b{font-size:12px}.ad-block-chooser button span{font-size:10px;color:var(--muted)}
+@media(max-width:700px){.ad-settings-grid{grid-template-columns:1fr}.ad-field.full{grid-column:auto}.ad-row-drop{display:flex;flex-direction:column}.ad-block-editor[data-width]{width:100%}.ad-block-controls{grid-template-columns:1fr 1fr}.ad-upload-area{grid-template-columns:1fr}.ad-upload-area>span{display:none}.ad-row-editor-head{align-items:flex-start;flex-direction:column;gap:10px}.ad-row-actions{width:100%}.ad-block-chooser{position:fixed;left:16px;right:16px;top:auto;bottom:16px;width:auto}}
+
+
+</style>
+</head>
+<body>
+
+<div class="wrap">
+    <header class="top" id="topHeader">
+        <h1>KH ESPORTS <span>ADMIN</span></h1>
+        <div id="userBadge"></div>
+    </header>
+
+    <!-- Everything the visitor sees before logging in — this whole group
+         gets pulled into the vortex together on a successful login. -->
+    <div id="preAuthScene">
+
+    <!-- LAMP INTRO -->
+    <div id="introLamp">
+        <div id="lightShaft" aria-hidden="true"></div>
+        <div id="fireflies" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+        </div>
+
+        <svg id="lampFixture" viewBox="0 0 200 112" aria-hidden="true" focusable="false">
+            <defs>
+                <linearGradient id="shadeGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#4a4a56" />
+                    <stop offset="45%" stop-color="#26262e" />
+                    <stop offset="100%" stop-color="#15151b" />
+                </linearGradient>
+                <linearGradient id="capGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#55555f" />
+                    <stop offset="100%" stop-color="#2a2a32" />
+                </linearGradient>
+                <radialGradient id="underGlow" cx="50%" cy="30%" r="70%">
+                    <stop offset="0%" stop-color="#fff6df" stop-opacity="0.95" />
+                    <stop offset="45%" stop-color="#ffd27a" stop-opacity="0.6" />
+                    <stop offset="100%" stop-color="#ffb454" stop-opacity="0" />
+                </radialGradient>
+                <radialGradient id="bulbGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#fffaf0" />
+                    <stop offset="45%" stop-color="#ffd98a" />
+                    <stop offset="100%" stop-color="#ffb454" stop-opacity="0" />
+                </radialGradient>
+                <filter id="softBlur" x="-60%" y="-60%" width="220%" height="220%">
+                    <feGaussianBlur stdDeviation="6" />
+                </filter>
+            </defs>
+
+            <ellipse class="under-glow" cx="100" cy="74" rx="40" ry="14" fill="url(#underGlow)" filter="url(#softBlur)" />
+
+            <line x1="100" y1="0" x2="100" y2="26" stroke="#3a3a42" stroke-width="2" />
+            <rect x="90" y="22" width="20" height="9" rx="3" fill="url(#capGrad)" />
+
+            <path d="M100,31
+                     C 82,31 70,46 66,62
+                     C 64,70 66,76 74,76
+                     L 126,76
+                     C 134,76 136,70 134,62
+                     C 130,46 118,31 100,31 Z"
+                  fill="url(#shadeGrad)" stroke="#57575f" stroke-width="0.75" />
+            <path d="M74,58 C 78,46 88,36 98,32" stroke="#6b6b76" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.55" />
+
+            <ellipse cx="100" cy="76" rx="26" ry="4" fill="#0d0d10" opacity="0.7" />
+            <ellipse class="rim-glow" cx="100" cy="76" rx="24" ry="3" fill="#ffdb9a" opacity="0" />
+
+            <circle id="bulbGlowCircle" cx="100" cy="82" r="22" fill="url(#bulbGlow)" class="bulb-glow" filter="url(#softBlur)" />
+            <circle id="bulbCore" cx="100" cy="82" r="6" fill="#57534a" class="bulb-core" />
+            <line x1="100" y1="88" x2="100" y2="112" stroke="#38383f" stroke-width="2" />
+        </svg>
+
+        <button type="button" id="pullCord" aria-label="Pull the cord to turn on the lamp">
+            <span class="cord-inner">
+                <span class="cord-line"></span>
+                <span class="cord-bead"></span>
+            </span>
+        </button>
+
+        <p id="pullHint">pull the cord</p>
+    </div>
+
+    <!-- LOGIN -->
+    <section id="loginScreen">
+        <div class="login-card">
+            <h2>Admin Login</h2>
+            <p class="sub">KH Esports Championship — content management</p>
+            <form id="loginForm">
+                <div class="field">
+                    <label for="loginEmail">Email</label>
+                    <div class="input-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 6.5h18v11H3z" stroke-linejoin="round"/><path d="M3.5 7 12 13l8.5-6" stroke-linejoin="round" stroke-linecap="round"/></svg>
+                        <input id="loginEmail" type="email" autocomplete="username" required />
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="loginPassword">Password</label>
+                    <div class="input-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="10.5" width="14" height="9.5" rx="1.8" stroke-linejoin="round"/><path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7" stroke-linecap="round"/></svg>
+                        <input id="loginPassword" type="password" autocomplete="current-password" required />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" id="loginSubmitBtn">
+                    <span class="btn-label">Log In</span>
+                    <span class="btn-loader" aria-hidden="true"><span></span><span></span><span></span></span>
+                </button>
+                <div id="loginMsg" class="msg"></div>
+            </form>
+        </div>
+    </section>
+
+    </div><!-- /#preAuthScene -->
+
+    <!-- VORTEX — hidden and scaled to nothing until a successful login -->
+    <div id="vortex" aria-hidden="true">
+        <svg class="vortex-art" viewBox="0 0 600 600" role="presentation" focusable="false">
+            <defs>
+                <linearGradient id="diskLight" x1="0" y1="0" x2="1" y2=".15">
+                    <stop offset="0%" stop-color="#35104f" stop-opacity=".12" />
+                    <stop offset="25%" stop-color="#792bb7" stop-opacity=".7" />
+                    <stop offset="43%" stop-color="#c084fc" />
+                    <stop offset="50%" stop-color="#f7eaff" />
+                    <stop offset="57%" stop-color="#a855f7" />
+                    <stop offset="78%" stop-color="#5b2189" stop-opacity=".82" />
+                    <stop offset="100%" stop-color="#2b103f" stop-opacity=".16" />
+                </linearGradient>
+                <linearGradient id="diskHeat" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#581c87" stop-opacity="0" />
+                    <stop offset="34%" stop-color="#a855f7" stop-opacity=".65" />
+                    <stop offset="49%" stop-color="#f5e7ff" />
+                    <stop offset="55%" stop-color="#d8b4fe" />
+                    <stop offset="100%" stop-color="#6b21a8" stop-opacity=".12" />
+                </linearGradient>
+                <linearGradient id="photonGlow" x1="0" y1="0" x2="1" y2=".3">
+                    <stop offset="0%" stop-color="#9b55d2" stop-opacity=".2" />
+                    <stop offset="36%" stop-color="#dabaff" />
+                    <stop offset="51%" stop-color="#fff7ff" />
+                    <stop offset="69%" stop-color="#bd7eff" />
+                    <stop offset="100%" stop-color="#7137a2" stop-opacity=".24" />
+                </linearGradient>
+                <radialGradient id="eventHorizon" cx="38%" cy="34%" r="70%">
+                    <stop offset="0%" stop-color="#08060b" />
+                    <stop offset="55%" stop-color="#030205" />
+                    <stop offset="100%" stop-color="#000" />
+                </radialGradient>
+                <radialGradient id="voidHalo">
+                    <stop offset="0%" stop-color="#000" stop-opacity="0" />
+                    <stop offset="62%" stop-color="#000" stop-opacity="0" />
+                    <stop offset="76%" stop-color="#050208" stop-opacity=".82" />
+                    <stop offset="100%" stop-color="#000" stop-opacity="0" />
+                </radialGradient>
+                <filter id="plasmaDistortion" x="-20%" y="-35%" width="140%" height="170%" color-interpolation-filters="sRGB">
+                    <feTurbulence type="fractalNoise" baseFrequency=".012 .045" numOctaves="2" seed="17" result="plasmaNoise" />
+                    <feDisplacementMap in="SourceGraphic" in2="plasmaNoise" scale="5" xChannelSelector="R" yChannelSelector="G" result="warpedPlasma" />
+                    <feGaussianBlur in="warpedPlasma" stdDeviation="1.4" result="plasmaGlow" />
+                    <feMerge><feMergeNode in="plasmaGlow" /><feMergeNode in="warpedPlasma" /></feMerge>
+                </filter>
+                <filter id="ringGlow" x="-70%" y="-100%" width="240%" height="300%" color-interpolation-filters="sRGB">
+                    <feGaussianBlur stdDeviation="5" result="softGlow" />
+                    <feMerge><feMergeNode in="softGlow" /><feMergeNode in="SourceGraphic" /></feMerge>
+                </filter>
+                <filter id="diskBloom" x="-40%" y="-80%" width="180%" height="260%" color-interpolation-filters="sRGB">
+                    <feGaussianBlur stdDeviation="13" />
+                </filter>
+                <filter id="spaceWarp" x="-30%" y="-50%" width="160%" height="200%" color-interpolation-filters="sRGB">
+                    <feTurbulence type="fractalNoise" baseFrequency=".018 .032" numOctaves="2" seed="7" result="spaceNoise">
+                        <animate attributeName="baseFrequency" values=".012 .024;.026 .041;.012 .024" dur="4.6s" repeatCount="indefinite" />
+                    </feTurbulence>
+                    <feDisplacementMap in="SourceGraphic" in2="spaceNoise" scale="8" xChannelSelector="R" yChannelSelector="G" />
+                </filter>
+                <clipPath id="diskBackHalf"><rect x="0" y="0" width="600" height="300" /></clipPath>
+                <clipPath id="diskFrontHalf"><rect x="0" y="300" width="600" height="300" /></clipPath>
+            </defs>
+
+            <ellipse cx="300" cy="300" rx="244" ry="94" fill="none" stroke="#6f24a7" stroke-width="44" opacity=".22" filter="url(#diskBloom)" />
+            <ellipse class="space-ripple" cx="300" cy="300" rx="270" ry="139" transform="rotate(-14 300 300)" />
+            <ellipse class="space-ripple" cx="300" cy="300" rx="251" ry="119" transform="rotate(11 300 300)" />
+
+            <g class="space-fracture">
+                <path d="M222 212 193 190 205 179 171 158 185 149 151 119 166 114 139 91 175 109 168 119 204 135 194 147 227 168 215 181 242 199" />
+                <path d="M377 211 405 188 394 177 427 156 413 146 449 118 433 112 461 89 426 108 434 119 399 135 409 147 376 169 388 181 359 200" />
+                <path d="M220 386 190 409 202 419 171 444 186 454 158 485 174 489 148 516 182 496 175 486 208 466 197 454 231 430 219 417 246 398" />
+                <path d="M378 387 408 411 396 421 429 445 414 455 443 486 427 490 454 516 420 497 427 486 393 466 404 454 370 431 382 418 355 399" />
+            </g>
+
+            <g class="debris-cloud">
+                <circle class="debris-particle" cx="86" cy="267" r="2.8" />
+                <circle class="debris-particle" cx="117" cy="351" r="1.8" />
+                <circle class="debris-particle" cx="166" cy="222" r="2.2" />
+                <circle class="debris-particle" cx="213" cy="403" r="1.5" />
+                <circle class="debris-particle" cx="386" cy="191" r="2.1" />
+                <circle class="debris-particle" cx="430" cy="386" r="2.7" />
+                <circle class="debris-particle" cx="485" cy="254" r="1.6" />
+                <circle class="debris-particle" cx="521" cy="329" r="2.3" />
+            </g>
+
+            <g clip-path="url(#diskBackHalf)">
+                <ellipse cx="300" cy="300" rx="236" ry="88" fill="none" stroke="#4d1b70" stroke-width="38" opacity=".58" filter="url(#diskBloom)" />
+                <ellipse class="plasma-stream stream-wide" cx="300" cy="300" rx="244" ry="94" />
+                <ellipse class="plasma-stream stream-mid" cx="300" cy="300" rx="221" ry="77" />
+                <ellipse class="plasma-stream stream-fast" cx="300" cy="300" rx="195" ry="60" />
+                <path class="plasma-wisp" d="M62 292 C122 208 194 198 254 241 S374 317 454 249 S530 217 555 271" stroke-width="13" opacity=".72" />
+                <path class="plasma-wisp" d="M80 315 C151 259 202 256 263 282 S391 335 510 284" stroke-width="5" opacity=".9" />
+                <path class="plasma-cloud" d="M61 270 C149 221 191 225 251 265 S393 294 542 244" fill="none" stroke="url(#diskLight)" stroke-width="10" />
+            </g>
+
+            <ellipse cx="300" cy="300" rx="111" ry="54" fill="none" stroke="url(#photonGlow)" stroke-width="8" opacity=".88" filter="url(#ringGlow)" />
+            <ellipse cx="300" cy="300" rx="103" ry="49" fill="none" stroke="#e9d5ff" stroke-width="2" opacity=".68" />
+            <circle cx="300" cy="300" r="98" fill="url(#voidHalo)" />
+            <circle cx="300" cy="300" r="76" fill="url(#eventHorizon)" />
+            <circle cx="300" cy="300" r="78" fill="none" stroke="#020104" stroke-width="5" />
+            <ellipse class="photon-ring" cx="300" cy="300" rx="91" ry="43" />
+
+            <g clip-path="url(#diskFrontHalf)">
+                <ellipse cx="300" cy="300" rx="244" ry="94" fill="none" stroke="#7130a0" stroke-width="34" opacity=".72" filter="url(#diskBloom)" />
+                <ellipse class="plasma-stream stream-wide" cx="300" cy="300" rx="244" ry="94" />
+                <ellipse class="plasma-stream stream-mid" cx="300" cy="300" rx="223" ry="78" />
+                <ellipse class="plasma-stream stream-fast" cx="300" cy="300" rx="198" ry="61" />
+                <path class="plasma-wisp" d="M58 307 C126 357 189 367 254 328 S389 278 460 338 S527 365 554 314" stroke-width="15" opacity=".86" />
+                <path class="plasma-wisp" d="M91 288 C170 333 229 337 281 316 S402 280 506 322" stroke-width="5" opacity=".9" />
+                <path class="plasma-cloud" d="M62 331 C150 377 195 370 263 330 S399 308 540 361" fill="none" stroke="url(#diskHeat)" stroke-width="12" />
+            </g>
+
+            <g class="energy-flashes">
+                <path class="energy-flash" d="M83 226 l18 -8 -7 17 24 -10 -14 24" />
+                <path class="energy-flash" d="M481 210 l-15 17 20 -3 -10 19 23 -15" />
+                <path class="energy-flash" d="M151 397 l14 -17 2 18 18 -12 -8 23" />
+                <path class="energy-flash" d="M435 384 l-18 -7 7 17 -22 -5 16 19" />
+            </g>
+        </svg>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard">
+        <div class="tabs">
+            <button class="tab-btn active" data-game="hok">Honor of Kings</button>
+            <button class="tab-btn" data-game="mlbb">Mobile Legends</button>
+        </div>
+
+        <div class="ad-admin-nav">
+            <button class="ad-admin-tab" id="adTabBtn" type="button">Advertisement</button>
+        </div>
+        <section id="advertisementPanel" class="ad-admin-panel" hidden></section>
+
+        <p class="hint">
+            Leave a field empty to keep showing the default placeholder text on the
+            live site (e.g. "TEAM A1" or "GROUP A WINNER"). Fill it in once the
+            real team is confirmed. Changes go live on the website the instant you
+            press Save — no need to publish or refresh anything else.
+        </p>
+
+        <div id="panel-hok" class="game-panel active" data-game="hok"></div>
+        <div id="panel-mlbb" class="game-panel" data-game="mlbb"></div>
+    </section>
+</div>
+
+<canvas id="cinematicCanvas" aria-hidden="true"></canvas>
+<div id="gravityLens" aria-hidden="true"></div>
+<svg id="spaceRift" viewBox="0 0 1000 700" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    <defs>
+        <linearGradient id="riftEdge" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0%" stop-color="#8a43bf" stop-opacity=".12" />
+            <stop offset="44%" stop-color="#c58cff" />
+            <stop offset="51%" stop-color="#fff7ff" />
+            <stop offset="57%" stop-color="#ddb5ff" />
+            <stop offset="100%" stop-color="#713a99" stop-opacity=".08" />
+        </linearGradient>
+        <filter id="riftGlow" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
+            <feGaussianBlur stdDeviation="3.5" result="fractureBloom" />
+            <feMerge><feMergeNode in="fractureBloom" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+    </defs>
+    <g class="rift-lines">
+        <path d="M500 350 476 331 490 314 459 293 473 278 438 253 452 238 420 214 438 207 409 179 426 175 398 145 420 157 402 125 429 147 424 128 449 158 448 140 470 175 474 158 490 195 498 174 506 215" />
+        <path d="M500 350 524 329 510 312 542 291 527 275 563 250 548 235 581 211 562 204 592 176 574 172 602 143 580 155 599 123 572 145 577 126 552 156 553 138 530 174 526 157 510 194 502 173 494 214" />
+        <path d="M500 350 474 370 489 387 457 407 473 423 438 448 454 463 420 487 439 495 408 522 428 526 399 555 421 543 404 575 431 552 426 571 451 541 450 559 471 524 476 542 491 505 498 526 506 486" />
+        <path d="M500 350 526 371 511 388 543 409 527 425 562 450 546 465 580 489 561 497 592 524 572 528 601 557 579 545 596 577 569 554 574 573 549 543 550 561 529 526 524 544 509 506 502 527 494 486" />
+        <path d="M500 350 462 348 444 360 419 352 392 369 359 357 331 374 300 361 267 380 229 368 194 391 153 378 116 403 76 393 42 420 0 412" />
+        <path d="M500 350 538 348 556 360 581 352 608 369 641 357 669 374 700 361 733 380 771 368 806 391 847 378 884 403 924 393 958 420 1000 412" />
+        <path d="M500 350 496 316 510 298 498 278 515 253 505 231 522 208 513 188 534 166 528 140 550 119 548 88 572 61 565 29 593 0" />
+        <path d="M500 350 504 384 490 402 502 422 485 447 495 469 478 492 487 512 466 534 472 560 450 581 452 612 428 639 435 671 407 700" />
+        <path d="M500 350 468 340 446 322 426 326 403 303 379 309 358 286 333 294 310 267 284 278 261 249 236 260 211 231 186 243 161 211 137 223 111 190 88 205 62 170 39 185 12 151 0 157" />
+        <path d="M500 350 532 340 554 322 574 326 597 303 621 309 642 286 667 294 690 267 716 278 739 249 764 260 789 231 814 243 839 211 863 223 889 190 912 205 938 170 961 185 988 151 1000 157" />
+    </g>
+</svg>
+
+<script type="module">
+import { auth, db, storage } from "./firebase-config.js";
+import {
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged,
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import {
+    doc,
+    getDoc,
+    setDoc,
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js";
+
+const GROUP_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H"];
+const QF_PAIRS = [["A", "B"], ["C", "D"], ["E", "F"], ["G", "H"]];
+
+const loginScreen = document.getElementById("loginScreen");
+const preAuthScene = document.getElementById("preAuthScene");
+const dashboard = document.getElementById("dashboard");
+const userBadge = document.getElementById("userBadge");
+const loginForm = document.getElementById("loginForm");
+const loginMsg = document.getElementById("loginMsg");
+
+// ---- Lamp intro ----
+const pullCord = document.getElementById("pullCord");
+
+pullCord.addEventListener("click", () => {
+    const turningOn = !document.body.classList.contains("lit");
+
+    pullCord.classList.add("pulling");
+    window.setTimeout(() => {
+        document.body.classList.toggle("lit", turningOn);
+    }, 120);
+    window.setTimeout(() => {
+        pullCord.classList.remove("pulling");
+    }, 650);
+
+    pullCord.setAttribute(
+        "aria-label",
+        turningOn ? "Pull the cord to turn off the lamp" : "Pull the cord to turn on the lamp"
+    );
+
+    if (turningOn) {
+        document.getElementById("loginEmail").focus({ preventScroll: true });
+    }
+});
+
+// Builds the editable form for one game's bracket into its panel element.
+function renderGamePanel(game) {
+    const panel = document.getElementById(`panel-${game}`);
+    panel.innerHTML = "";
+
+    // ---- Group Stage ----
+    const groupTitle = document.createElement("div");
+    groupTitle.className = "block-title";
+    groupTitle.textContent = "01 · Group Stage";
+    panel.appendChild(groupTitle);
+
+    const groupGrid = document.createElement("div");
+    groupGrid.className = "group-grid";
+
+    GROUP_LETTERS.forEach((letter) => {
+        const box = document.createElement("div");
+        box.className = "group-box";
+
+        const h4 = document.createElement("h4");
+        h4.textContent = `Group ${letter}`;
+        box.appendChild(h4);
+
+        for (let i = 0; i < 4; i++) {
+            const input = document.createElement("input");
+            input.type = "text";
+            input.placeholder = `TEAM ${letter}${i + 1}`;
+            input.dataset.field = `group${letter}:${i}`;
+            box.appendChild(input);
+        }
+
+        groupGrid.appendChild(box);
+    });
+
+    panel.appendChild(groupGrid);
+
+    // ---- Knockout Stage ----
+    const koTitle = document.createElement("div");
+    koTitle.className = "block-title";
+    koTitle.textContent = "02 · Knockout Stage";
+    panel.appendChild(koTitle);
+
+    QF_PAIRS.forEach(([a, b], i) => {
+        const row = document.createElement("div");
+        row.className = "match-row";
+        row.innerHTML = `
+            <span class="match-label">QF 0${i + 1}</span>
+            <input type="text" placeholder="GROUP ${a} WINNER" data-field="qf${i + 1}:0" />
+            <input type="text" placeholder="GROUP ${b} WINNER" data-field="qf${i + 1}:1" />
+        `;
+        panel.appendChild(row);
+    });
+
+    [["SF 01", "sf1", "QF 01 WINNER", "QF 02 WINNER"],
+     ["SF 02", "sf2", "QF 03 WINNER", "QF 04 WINNER"]].forEach(([label, key, ph1, ph2]) => {
+        const row = document.createElement("div");
+        row.className = "match-row";
+        row.innerHTML = `
+            <span class="match-label">${label}</span>
+            <input type="text" placeholder="${ph1}" data-field="${key}:0" />
+            <input type="text" placeholder="${ph2}" data-field="${key}:1" />
+        `;
+        panel.appendChild(row);
+    });
+
+    const finalRow = document.createElement("div");
+    finalRow.className = "match-row";
+    finalRow.innerHTML = `
+        <span class="match-label">FINAL</span>
+        <input type="text" placeholder="SF 01 WINNER" data-field="final:0" />
+        <input type="text" placeholder="SF 02 WINNER" data-field="final:1" />
+    `;
+    panel.appendChild(finalRow);
+
+    const championRow = document.createElement("div");
+    championRow.className = "match-row champion-row";
+    championRow.innerHTML = `
+        <span class="match-label">CHAMPION</span>
+        <input type="text" placeholder="KH ESPORTS CHAMPION" data-field="champion" />
+    `;
+    panel.appendChild(championRow);
+
+    // ---- Save row ----
+    const saveRow = document.createElement("div");
+    saveRow.className = "save-row";
+    saveRow.innerHTML = `
+        <button type="button" class="btn btn-primary" data-save="${game}">Save ${game.toUpperCase()} Bracket</button>
+        <span class="msg" id="saveMsg-${game}"></span>
+    `;
+    panel.appendChild(saveRow);
+}
+
+async function loadGameData(game) {
+    const ref = doc(db, "brackets", game);
+    const snap = await getDoc(ref);
+    const data = snap.exists() ? snap.data() : {};
+    const panel = document.getElementById(`panel-${game}`);
+
+    panel.querySelectorAll("input[data-field]").forEach((input) => {
+        const key = input.dataset.field;
+        if (typeof data[key] === "string") {
+            input.value = data[key];
+        }
+    });
+}
+
+async function saveGameData(game) {
+    const panel = document.getElementById(`panel-${game}`);
+    const msg = document.getElementById(`saveMsg-${game}`);
+    const payload = {};
+
+    panel.querySelectorAll("input[data-field]").forEach((input) => {
+        payload[input.dataset.field] = input.value.trim();
+    });
+
+    msg.textContent = "Saving…";
+    msg.className = "msg";
+
+    try {
+        await setDoc(doc(db, "brackets", game), payload, { merge: true });
+        msg.textContent = "Saved — live on the site now.";
+        msg.className = "msg ok";
+    } catch (err) {
+        console.error(err);
+        msg.textContent = "Could not save: " + err.message;
+        msg.className = "msg error";
+    }
+}
+
+// ---- Tabs ----
+document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+        document.querySelectorAll(".game-panel").forEach((p) => p.classList.remove("active"));
+        btn.classList.add("active");
+        if (adPanel) { adPanel.hidden = true; adTabBtn.classList.remove("active"); }
+        document.getElementById(`panel-${btn.dataset.game}`).classList.add("active");
+    });
+});
+
+// ---- Save button delegation ----
+document.getElementById("dashboard").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-save]");
+    if (btn) {
+        saveGameData(btn.dataset.save);
+    }
+});
+
+
+// ---- Advertisement editor ----
+const adPanel = document.getElementById("advertisementPanel");
+const adTabBtn = document.getElementById("adTabBtn");
+const DEFAULT_AD = { enabled:false, showOnLoad:true, link:"", rows:[] };
+let adState = structuredClone(DEFAULT_AD);
+let draggedBlock = null;
+const AD_FONTS = [
+    "Inter, sans-serif",
+    "Arial, sans-serif",
+    "Georgia, serif",
+    "Times New Roman, serif",
+    "Courier New, monospace",
+    "Verdana, sans-serif",
+    "Trebuchet MS, sans-serif",
+];
+const AD_COLORS = [
+    { v:"theme", t:"Theme · Purple → Blue → Cyan" },
+    { v:"#ffffff", t:"White" },
+    { v:"#f4f5f7", t:"Light" },
+    { v:"#a855f7", t:"Purple" },
+    { v:"#22d3ee", t:"Cyan" },
+    { v:"#f59e0b", t:"Amber" },
+    { v:"#34d399", t:"Green" },
+    { v:"#f87171", t:"Red" },
+    { v:"#000000", t:"Black" },
+];
+const AD_WIDTHS = [
+    ["w25", "25%"], ["w33", "33%"], ["w50", "50%"], ["w67", "67%"], ["w100", "100%"],
+];
+const uid = () => "ad_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const adEsc = (v="") => String(v).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+
+function adBlockDefault(type) {
+    if (type === "image") return { id:uid(), type:"image", src:"", alt:"", width:"w100", align:"center" };
+    if (type === "countdown") return { id:uid(), type:"countdown", label:"Countdown", target:"", width:"w100", align:"center" };
+    return {
+        id:uid(), type:"text", variant:"title", text:"", color:"theme",
+        font:AD_FONTS[0], bold:false, italic:false, underline:false,
+        width:"w100", align:"left"
+    };
+}
+
+function normalizeAdState(raw) {
+    const next = {
+        enabled: !!raw?.enabled,
+        showOnLoad: raw?.showOnLoad !== false,
+        link: typeof raw?.link === "string" ? raw.link : "",
+        rows: Array.isArray(raw?.rows) ? raw.rows : [],
+    };
+    next.rows = next.rows.map(row => Array.isArray(row) ? row.map(block => ({
+        ...block,
+        id: block?.id || uid(),
+        type: ["text","image","countdown"].includes(block?.type) ? block.type : "text",
+        width: block?.width || "w100",
+        align: block?.align || (block?.type === "countdown" ? "center" : "left"),
+    })) : []);
+    return next;
+}
+
+function renderAdEditor() {
+    if (!adPanel) return;
+    adPanel.hidden = false;
+    adTabBtn.classList.add("active");
+    adPanel.innerHTML = `
+        <div class="ad-settings-grid">
+            <div class="ad-field">
+                <label>Advertisement status</label>
+                <label class="ad-toggle"><input id="adEnabled" type="checkbox"> Enable advertisement</label>
+            </div>
+            <div class="ad-field">
+                <label>Opening behavior</label>
+                <label class="ad-toggle"><input id="adShowOnLoad" type="checkbox"> Show full advertisement on every page load</label>
+            </div>
+            <div class="ad-field full">
+                <label>Advertisement link</label>
+                <input id="adLink" type="url" placeholder="https://example.com/register">
+                <small class="ad-help">If supplied, clicking the advertisement content opens this link.</small>
+            </div>
+        </div>
+
+        <div class="ad-builder-head">
+            <div>
+                <h3>Content & Layout</h3>
+                <small class="ad-help">Build the advertisement row by row. Each row can contain multiple blocks.</small>
+            </div>
+            <button class="btn" type="button" id="adAddRow">+ Add Row</button>
+        </div>
+
+        <div id="adRows"></div>
+
+        <div class="ad-save">
+            <button class="btn btn-primary" type="button" id="adSaveBtn">Save Advertisement</button>
+            <span class="msg" id="adSaveMsg"></span>
+        </div>`;
+
+    document.getElementById("adEnabled").checked = !!adState.enabled;
+    document.getElementById("adShowOnLoad").checked = adState.showOnLoad !== false;
+    document.getElementById("adLink").value = adState.link || "";
+
+    document.getElementById("adAddRow").onclick = () => {
+        adState.rows.push([]);
+        renderAdRows();
+    };
+    document.getElementById("adSaveBtn").onclick = saveAdvertisement;
+    renderAdRows();
+}
+
+function renderAdRows() {
+    const host = document.getElementById("adRows");
+    if (!host) return;
+    host.innerHTML = "";
+
+    if (!adState.rows.length) {
+        host.innerHTML = `
+            <div class="ad-empty-state">
+                <strong>No advertisement content yet.</strong>
+                <span>Click <b>+ Add Row</b>, then choose Text, Image or Countdown.</span>
+            </div>`;
+        return;
+    }
+
+    adState.rows.forEach((row, ri) => {
+        const rowEl = document.createElement("div");
+        rowEl.className = "ad-row-editor";
+        rowEl.dataset.row = ri;
+        rowEl.innerHTML = `
+            <div class="ad-row-editor-head">
+                <div><span>ROW ${ri + 1}</span><small>${row.length} block${row.length === 1 ? "" : "s"}</small></div>
+                <div class="ad-row-actions">
+                    <button class="ad-mini-btn ad-add-block-btn" type="button" data-row-add="${ri}">+ Add Block</button>
+                    <button class="ad-mini-btn" type="button" data-row-up="${ri}" ${ri === 0 ? "disabled" : ""}>↑</button>
+                    <button class="ad-mini-btn" type="button" data-row-down="${ri}" ${ri === adState.rows.length - 1 ? "disabled" : ""}>↓</button>
+                    <button class="ad-mini-btn danger" type="button" data-row-del="${ri}">Delete Row</button>
+                </div>
+            </div>
+            <div class="ad-row-drop" data-drop-row="${ri}"></div>`;
+        host.appendChild(rowEl);
+
+        const drop = rowEl.querySelector(".ad-row-drop");
+        row.forEach((block, bi) => {
+            const el = document.createElement("div");
+            el.className = "ad-block-editor";
+            el.dataset.id = block.id;
+            el.dataset.index = bi;
+            el.dataset.row = ri;
+            el.dataset.width = block.width || "w100";
+            el.draggable = true;
+            el.innerHTML = adBlockHTML(block, ri, bi);
+            drop.appendChild(el);
+        });
+    });
+
+    host.querySelectorAll("[data-row-add]").forEach(btn => {
+        btn.onclick = () => openBlockChooser(Number(btn.dataset.row), null);
+    });
+    host.querySelectorAll("[data-row-del]").forEach(btn => {
+        btn.onclick = () => {
+            const i = Number(btn.dataset.row);
+            if (adState.rows[i]?.length && !confirm("Delete this row and all of its blocks?")) return;
+            adState.rows.splice(i, 1);
+            renderAdRows();
+        };
+    });
+    host.querySelectorAll("[data-row-up]").forEach(btn => {
+        btn.onclick = () => {
+            const i = Number(btn.dataset.row);
+            if (i > 0) {
+                [adState.rows[i - 1], adState.rows[i]] = [adState.rows[i], adState.rows[i - 1]];
+                renderAdRows();
+            }
+        };
+    });
+    host.querySelectorAll("[data-row-down]").forEach(btn => {
+        btn.onclick = () => {
+            const i = Number(btn.dataset.row);
+            if (i < adState.rows.length - 1) {
+                [adState.rows[i + 1], adState.rows[i]] = [adState.rows[i], adState.rows[i + 1]];
+                renderAdRows();
+            }
+        };
+    });
+    host.querySelectorAll("[data-add-type]").forEach(btn => {
+        btn.onclick = () => {
+            const row = Number(btn.dataset.row);
+            const index = Number(btn.dataset.index);
+            adState.rows[row].splice(index + 1, 0, adBlockDefault(btn.dataset.addType));
+            renderAdRows();
+        };
+    });
+    host.querySelectorAll("[data-delete-block]").forEach(btn => {
+        btn.onclick = () => {
+            const row = Number(btn.dataset.row);
+            const index = Number(btn.dataset.index);
+            adState.rows[row].splice(index, 1);
+            renderAdRows();
+        };
+    });
+    host.querySelectorAll("[data-field]").forEach(input => {
+        input.addEventListener("input", () => updateBlockFromInput(input));
+        input.addEventListener("change", () => updateBlockFromInput(input));
+    });
+    host.querySelectorAll("[data-upload]").forEach(input => {
+        input.addEventListener("change", () => uploadAdImage(input));
+    });
+
+    host.querySelectorAll(".ad-block-editor").forEach(el => {
+        el.addEventListener("dragstart", e => {
+            draggedBlock = { id:el.dataset.id, row:Number(el.dataset.row), index:Number(el.dataset.index) };
+            el.classList.add("is-dragging");
+            e.dataTransfer.effectAllowed = "move";
+        });
+        el.addEventListener("dragend", () => {
+            el.classList.remove("is-dragging");
+            draggedBlock = null;
+            host.querySelectorAll(".ad-drop-target").forEach(x => x.classList.remove("ad-drop-target"));
+        });
+        el.addEventListener("dragover", e => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            el.classList.add("ad-drop-target");
+        });
+        el.addEventListener("dragleave", () => el.classList.remove("ad-drop-target"));
+        el.addEventListener("drop", e => {
+            e.preventDefault();
+            el.classList.remove("ad-drop-target");
+            if (!draggedBlock || draggedBlock.id === el.dataset.id) return;
+            moveAdBlock(draggedBlock.id, draggedBlock.row, Number(el.dataset.row), Number(el.dataset.index));
+        });
+    });
+    host.querySelectorAll("[data-drop-row]").forEach(el => {
+        el.addEventListener("dragover", e => { e.preventDefault(); el.classList.add("ad-drop-target"); });
+        el.addEventListener("dragleave", () => el.classList.remove("ad-drop-target"));
+        el.addEventListener("drop", e => {
+            e.preventDefault();
+            el.classList.remove("ad-drop-target");
+            if (!draggedBlock) return;
+            moveAdBlock(draggedBlock.id, draggedBlock.row, Number(el.dataset.dropRow), adState.rows[Number(el.dataset.dropRow)].length);
+        });
+    });
+}
+
+function openBlockChooser(rowIndex, insertAfterIndex) {
+    document.querySelectorAll(".ad-block-chooser").forEach(x => x.remove());
+    const row = document.querySelector(`.ad-row-editor[data-row="${rowIndex}"]`);
+    if (!row) return;
+    const chooser = document.createElement("div");
+    chooser.className = "ad-block-chooser";
+    chooser.innerHTML = `
+        <div class="ad-chooser-title">Choose a block</div>
+        <button type="button" data-choice="text"><b>Text</b><span>Title, subtitle or paragraph</span></button>
+        <button type="button" data-choice="image"><b>Image</b><span>Upload an image or use an image URL</span></button>
+        <button type="button" data-choice="countdown"><b>Countdown</b><span>Live event / registration timer</span></button>`;
+    row.querySelector(".ad-row-editor-head").appendChild(chooser);
+    chooser.querySelectorAll("[data-choice]").forEach(btn => {
+        btn.onclick = () => {
+            const type = btn.dataset.choice;
+            const block = adBlockDefault(type);
+            const target = adState.rows[rowIndex];
+            const index = insertAfterIndex === null ? target.length : insertAfterIndex + 1;
+            target.splice(index, 0, block);
+            chooser.remove();
+            renderAdRows();
+            requestAnimationFrame(() => {
+                const card = document.querySelector(`.ad-block-editor[data-id="${block.id}"]`);
+                card?.scrollIntoView({ behavior:"smooth", block:"nearest" });
+            });
+        };
+    });
+}
+
+function adBlockHTML(b, ri, bi) {
+    const type = b.type || "text";
+    let body = `
+        <div class="ad-block-top">
+            <div class="ad-block-heading"><span class="ad-block-drag">⠿</span><span class="ad-block-type">${type.toUpperCase()}</span></div>
+            <div class="ad-block-actions">
+                <button class="ad-mini-btn" type="button" data-add-type="text" data-row="${ri}" data-index="${bi}">+Text</button>
+                <button class="ad-mini-btn" type="button" data-add-type="image" data-row="${ri}" data-index="${bi}">+Image</button>
+                <button class="ad-mini-btn" type="button" data-add-type="countdown" data-row="${ri}" data-index="${bi}">+Countdown</button>
+                <button class="ad-mini-btn danger" type="button" data-delete-block="1" data-row="${ri}" data-index="${bi}">Delete</button>
+            </div>
+        </div>
+        <div class="ad-block-controls">
+            <label>Width<select data-field="width">${AD_WIDTHS.map(([v,t]) => `<option value="${v}" ${b.width===v?"selected":""}>${t}</option>`).join("")}</select></label>
+            <label>Alignment<select data-field="align"><option value="left" ${b.align==="left"?"selected":""}>Left</option><option value="center" ${b.align==="center"?"selected":""}>Center</option><option value="right" ${b.align==="right"?"selected":""}>Right</option></select></label>`;
+
+    if (type === "text") {
+        body += `
+            <label>Text style<select data-field="variant"><option value="title" ${b.variant==="title"?"selected":""}>Title</option><option value="subtitle" ${b.variant==="subtitle"?"selected":""}>Subtitle</option><option value="paragraph" ${b.variant==="paragraph"?"selected":""}>Paragraph</option></select></label>
+            <label>Color<select data-field="color">${AD_COLORS.map(c => `<option value="${adEsc(c.v)}" ${b.color===c.v?"selected":""}>${adEsc(c.t)}</option>`).join("")}</select></label>
+            <label>Font<select data-field="font">${AD_FONTS.map(f => `<option value="${adEsc(f)}" ${b.font===f?"selected":""}>${adEsc(f.split(",")[0])}</option>`).join("")}</select></label>
+        </div>
+        <textarea class="ad-text-input" data-field="text" placeholder="Type your advertisement text here…">${adEsc(b.text || "")}</textarea>
+        <div class="ad-checks">
+            <label><input type="checkbox" data-field="bold" ${b.bold?"checked":""}> Bold</label>
+            <label><input type="checkbox" data-field="italic" ${b.italic?"checked":""}> Italic</label>
+            <label><input type="checkbox" data-field="underline" ${b.underline?"checked":""}> Underline</label>
+        </div>`;
+    } else if (type === "image") {
+        body += `
+        </div>
+        <div class="ad-upload-area">
+            <label class="ad-upload-btn">Upload Image<input type="file" accept="image/*" data-upload="1"></label>
+            <span>or</span>
+            <input data-field="src" type="url" placeholder="Paste image URL" value="${adEsc(b.src || "")}">
+        </div>
+        <input data-field="alt" type="text" placeholder="Alt text (optional)" value="${adEsc(b.alt || "")}">
+        ${b.src ? `<img class="ad-image-preview" src="${adEsc(b.src)}" alt="">` : `<div class="ad-image-placeholder">No image selected</div>`}`;
+    } else {
+        body += `
+        </div>
+        <label>Countdown label<input data-field="label" type="text" placeholder="e.g. REGISTRATION CLOSES IN" value="${adEsc(b.label || "")}"></label>
+        <label>Target date & time<input data-field="target" type="datetime-local" value="${b.target ? new Date(b.target).toISOString().slice(0,16) : ""}"></label>
+        <div class="ad-countdown-hint">Example: set the registration closing time, tournament start time, or lucky draw time.</div>`;
+    }
+    return body;
+}
+
+function findAdBlock(id) {
+    for (let r=0; r<adState.rows.length; r++) {
+        const i = adState.rows[r].findIndex(b => b.id === id);
+        if (i >= 0) return { r, i, b:adState.rows[r][i] };
+    }
+    return null;
+}
+
+function updateBlockFromInput(input) {
+    const card = input.closest(".ad-block-editor");
+    const found = card && findAdBlock(card.dataset.id);
+    if (!found) return;
+    let value = input.type === "checkbox" ? input.checked : input.value;
+    if (input.dataset.field === "target" && value) value = new Date(value).toISOString();
+    found.b[input.dataset.field] = value;
+    if (input.dataset.field === "width") card.dataset.width = value;
+}
+
+async function uploadAdImage(input) {
+    const card = input.closest(".ad-block-editor");
+    const found = card && findAdBlock(card.dataset.id);
+    const file = input.files?.[0];
+    if (!found || !file) return;
+    const msg = document.getElementById("adSaveMsg");
+    if (msg) { msg.textContent = "Uploading image…"; msg.className = "msg"; }
+    try {
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = `advertisements/${Date.now()}-${safeName}`;
+        const snap = await uploadBytes(storageRef(storage, path), file, { contentType:file.type });
+        found.b.src = await getDownloadURL(snap.ref);
+        renderAdRows();
+        if (msg) { msg.textContent = "Image uploaded. Click Save Advertisement to publish it."; msg.className = "msg ok"; }
+    } catch (err) {
+        console.error(err);
+        if (msg) { msg.textContent = "Image upload failed: " + err.message; msg.className = "msg error"; }
+    }
+}
+
+function moveAdBlock(id, from, to, toIndex) {
+    const source = adState.rows[from];
+    if (!source) return;
+    const index = source.findIndex(b => b.id === id);
+    if (index < 0) return;
+    const [block] = source.splice(index, 1);
+    const destination = adState.rows[to];
+    if (!destination) return;
+    if (from === to && toIndex > index) toIndex--;
+    destination.splice(Math.max(0, Math.min(toIndex, destination.length)), 0, block);
+    renderAdRows();
+}
+
+async function loadAdvertisement() {
+    try {
+        const snap = await getDoc(doc(db, "advertisements", "main"));
+        adState = normalizeAdState(snap.exists() ? snap.data() : DEFAULT_AD);
+        renderAdEditor();
+    } catch (err) {
+        console.error("Could not load advertisement:", err);
+        adState = normalizeAdState(DEFAULT_AD);
+        renderAdEditor();
+    }
+}
+
+async function saveAdvertisement() {
+    adState.enabled = document.getElementById("adEnabled").checked;
+    adState.showOnLoad = document.getElementById("adShowOnLoad").checked;
+    adState.link = document.getElementById("adLink").value.trim();
+    const msg = document.getElementById("adSaveMsg");
+    msg.textContent = "Saving…";
+    msg.className = "msg";
+    try {
+        await setDoc(doc(db, "advertisements", "main"), adState);
+        msg.textContent = "Saved — live on the site now.";
+        msg.className = "msg ok";
+    } catch (err) {
+        console.error(err);
+        msg.textContent = "Could not save: " + err.message;
+        msg.className = "msg error";
+    }
+}
+
+if (adTabBtn) {
+    adTabBtn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".game-panel").forEach(p => p.classList.remove("active"));
+        renderAdEditor();
+    });
+}
+
+// ---- Login ----
+
+const loginSubmitBtn = document.getElementById("loginSubmitBtn");
+loadAdvertisement();
+
+const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+class CinematicAbility {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext("2d", { alpha: true });
+        this.center = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+        this.phase = "";
+        this.phaseStarted = 0;
+        this.phaseDuration = 1;
+        this.active = false;
+        this.frameId = 0;
+        this.width = 0;
+        this.height = 0;
+        this.ratio = 1;
+        this.radius = 0;
+        this.diskSprite = document.createElement("canvas");
+        this.diskSpriteContext = this.diskSprite.getContext("2d");
+        this.diskSpriteWidth = 0;
+        this.diskSpriteHeight = 0;
+        this.particles = Array.from({ length: 64 }, (_, index) => ({
+            angle: index * 2.399963 + Math.random() * .12,
+            orbit: .42 + Math.random() * .53,
+            speed: .24 + Math.random() * .88,
+            size: .65 + Math.random() * 2.4,
+            seed: Math.random() * Math.PI * 2,
+        }));
+        this.renderFrame = this.renderFrame.bind(this);
+        this.resize = this.resize.bind(this);
+        window.addEventListener("resize", this.resize, { passive: true });
+        this.resize();
+    }
+
+    resize() {
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+        this.ratio = Math.min(window.devicePixelRatio || 1, 1, 1920 / this.width, 1200 / this.height);
+        this.canvas.width = Math.round(this.width * this.ratio);
+        this.canvas.height = Math.round(this.height * this.ratio);
+        this.ctx.setTransform(this.ratio, 0, 0, this.ratio, 0, 0);
+        const radius = Math.min(244, this.width * .36, this.height * .38);
+        if (radius !== this.radius) {
+            this.radius = radius;
+            this.buildDiskSprite();
+        }
+    }
+
+    buildDiskSprite() {
+        const radius = this.radius;
+        const scale = this.ratio;
+        this.diskSpriteWidth = radius * 2.5;
+        this.diskSpriteHeight = radius * 1.15;
+        this.diskSprite.width = Math.ceil(this.diskSpriteWidth * scale);
+        this.diskSprite.height = Math.ceil(this.diskSpriteHeight * scale);
+
+        const ctx = this.diskSpriteContext;
+        ctx.setTransform(scale, 0, 0, scale, 0, 0);
+        ctx.clearRect(0, 0, this.diskSpriteWidth, this.diskSpriteHeight);
+        ctx.translate(this.diskSpriteWidth / 2, this.diskSpriteHeight / 2);
+        ctx.scale(1, .36);
+
+        const band = ctx.createRadialGradient(0, 0, radius * .3, 0, 0, radius * 1.22);
+        band.addColorStop(0, "rgba(3, 1, 8, 0)");
+        band.addColorStop(.38, "rgba(28, 8, 48, .25)");
+        band.addColorStop(.54, "rgba(84, 31, 132, .55)");
+        band.addColorStop(.72, "rgba(180, 119, 227, .82)");
+        band.addColorStop(.8, "rgba(243, 222, 255, .95)");
+        band.addColorStop(.88, "rgba(129, 58, 182, .55)");
+        band.addColorStop(1, "rgba(30, 8, 48, 0)");
+        ctx.fillStyle = band;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 1.22, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.globalCompositeOperation = "lighter";
+        const shell = ctx.createLinearGradient(-radius, 0, radius, 0);
+        shell.addColorStop(0, "rgba(68, 24, 102, .12)");
+        shell.addColorStop(.32, "rgba(151, 78, 207, .64)");
+        shell.addColorStop(.51, "rgba(250, 235, 255, .95)");
+        shell.addColorStop(.63, "rgba(172, 99, 218, .72)");
+        shell.addColorStop(1, "rgba(55, 17, 87, .1)");
+        for (let layer = 0; layer < 3; layer += 1) {
+            const ringRadius = radius * (.65 + layer * .14);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, ringRadius, ringRadius * (1 + layer * .012), 0, .025 + layer * .08, Math.PI * 2 - .12);
+            ctx.strokeStyle = shell;
+            ctx.globalAlpha = .72 - layer * .16;
+            ctx.lineWidth = radius * (.017 - layer * .0035);
+            ctx.stroke();
+        }
+
+        ctx.globalAlpha = .48;
+        ctx.lineWidth = radius * .014;
+        for (let stream = 0; stream < 10; stream += 1) {
+            const seed = stream * 2.399;
+            const start = seed;
+            const end = seed + (stream % 2 ? -.22 : .28);
+            const outer = radius * (.76 + stream % 3 * .1);
+            const inner = radius * (.58 + stream % 4 * .035);
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(start) * outer, Math.sin(start) * outer);
+            ctx.bezierCurveTo(Math.cos(start + .16) * outer * .72, Math.sin(start + .16) * outer * .72,
+                Math.cos(end - .11) * inner * 1.16, Math.sin(end - .11) * inner * 1.16,
+                Math.cos(end) * inner, Math.sin(end) * inner);
+            ctx.strokeStyle = stream % 3 === 0 ? "rgba(251, 231, 255, .94)" : "rgba(174, 109, 224, .78)";
+            ctx.lineWidth = radius * (.004 + stream % 2 * .002);
+            ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    drawDiskSprite(radius, front, now, mode, progress) {
+        const ctx = this.ctx;
+        const ratio = radius / Math.max(1, this.radius);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(-radius * 1.3, front ? 0 : -radius * 1.3, radius * 2.6, radius * 1.3);
+        ctx.clip();
+        ctx.drawImage(this.diskSprite,
+            -this.diskSpriteWidth * ratio / 2,
+            -this.diskSpriteHeight * ratio / 2,
+            this.diskSpriteWidth * ratio,
+            this.diskSpriteHeight * ratio);
+        this.drawAccretionFlow(radius, now, mode, progress, front);
+        ctx.restore();
+    }
+
+    drawAccretionFlow(radius, now, mode, progress, front) {
+        const ctx = this.ctx;
+        const acceleration = mode === "consume" ? 1 + progress * 2.6 : mode === "collapse" ? 5 : 1;
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.lineCap = "round";
+        ctx.setLineDash([radius * .055, radius * .11]);
+        for (let stream = 0; stream < 8; stream += 1) {
+            const angle = stream * Math.PI / 4 + Math.sin(stream * 7.3) * .08;
+            const direction = stream % 2 ? -1 : 1;
+            const outer = radius * (.96 + stream % 3 * .07);
+            const middle = radius * (.71 + stream % 4 * .035);
+            const core = radius * (.34 + stream % 3 * .025);
+            const flow = (now * .00012 * acceleration + stream * .137) % 1;
+            const end = middle - (middle - core) * flow;
+            const yScale = .36;
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(angle) * outer, Math.sin(angle) * outer * yScale);
+            ctx.bezierCurveTo(Math.cos(angle + direction * .18) * outer * .78,
+                Math.sin(angle + direction * .18) * outer * yScale * .78,
+                Math.cos(angle + direction * .3) * middle,
+                Math.sin(angle + direction * .3) * middle * yScale,
+                Math.cos(angle + direction * .42) * end,
+                Math.sin(angle + direction * .42) * end * yScale);
+            ctx.lineDashOffset = -flow * radius * .33;
+            ctx.strokeStyle = stream % 3 === 0 ? "rgba(246, 228, 255, .82)" : "rgba(179, 112, 229, .56)";
+            ctx.lineWidth = radius * (.006 + stream % 3 * .001);
+            ctx.stroke();
+        }
+        ctx.setLineDash([]);
+        ctx.restore();
+    }
+
+    setCenter(x, y) {
+        this.center = { x, y };
+    }
+
+    setPhase(phase, duration) {
+        this.phase = phase;
+        this.phaseStarted = performance.now();
+        this.phaseDuration = duration;
+        this.active = true;
+        this.canvas.style.display = "block";
+        if (!this.frameId) this.frameId = window.requestAnimationFrame(this.renderFrame);
+    }
+
+    stop() {
+        this.active = false;
+        if (this.frameId) window.cancelAnimationFrame(this.frameId);
+        this.frameId = 0;
+        this.ctx.clearRect(0, 0, this.width, this.height);
+        this.canvas.style.display = "none";
+    }
+
+    renderFrame(now) {
+        this.frameId = 0;
+        if (!this.active) return;
+
+        const ctx = this.ctx;
+        const progress = Math.max(0, Math.min(1, (now - this.phaseStarted) / this.phaseDuration));
+        ctx.clearRect(0, 0, this.width, this.height);
+
+        if (this.phase === "fracture") {
+            this.drawFracture(progress, now);
+        } else if (this.phase === "emerge") {
+            this.drawLensing(now, .72);
+            this.drawHole(this.easeOut(progress), now, "emerge", progress);
+        } else if (this.phase === "dominance") {
+            this.drawLensing(now, .48);
+            this.drawHole(1, now, "dominance", progress);
+        } else if (this.phase === "consume") {
+            this.drawLensing(now, .46 + progress * .42);
+            this.drawHole(1, now, "consume", progress);
+        } else if (this.phase === "collapse") {
+            this.drawLensing(now, 1 - progress);
+            this.drawHole(1, now, "collapse", progress);
+            this.drawImplosion(progress);
+        }
+
+        this.frameId = window.requestAnimationFrame(this.renderFrame);
+    }
+
+    easeOut(value) {
+        return 1 - Math.pow(1 - value, 3);
+    }
+
+    easeIn(value) {
+        return value * value * value;
+    }
+
+    collapseShell(progress) {
+        if (progress < .22) return 1 - this.easeIn(progress / .22) * .13;
+        if (progress < .56) return .87 - this.easeIn((progress - .22) / .34) * .54;
+        if (progress < .84) return .33 - this.easeIn((progress - .56) / .28) * .29;
+        return .04 - this.easeIn((progress - .84) / .16) * .037;
+    }
+
+    collapseCore(progress) {
+        if (progress < .55) return 1;
+        if (progress < .82) return 1 - this.easeIn((progress - .55) / .27) * .76;
+        if (progress < .95) return .24 - this.easeIn((progress - .82) / .13) * .22;
+        return .02 - this.easeIn((progress - .95) / .05) * .018;
+    }
+
+    drawFracture(progress, now) {
+        const ctx = this.ctx;
+        const { x, y } = this.center;
+        const radius = this.radius;
+        const reach = Math.hypot(this.width, this.height) * .78 * this.easeOut(progress);
+        const intensity = Math.sin(Math.PI * Math.min(1, progress * 1.15));
+        const haze = ctx.createRadialGradient(x, y, 0, x, y, Math.max(this.width, this.height) * .72);
+        haze.addColorStop(0, `rgba(24, 7, 38, ${.42 * intensity})`);
+        haze.addColorStop(.12, `rgba(114, 45, 159, ${.14 * intensity})`);
+        haze.addColorStop(.48, "rgba(8, 3, 14, 0)");
+        ctx.fillStyle = haze;
+        ctx.fillRect(0, 0, this.width, this.height);
+
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        ctx.lineCap = "round";
+        for (let index = 0; index < 12; index += 1) {
+            const angle = index * Math.PI * 2 / 12 + Math.sin(index * 8.17) * .075;
+            const edge = this.rayLength(angle) * .94;
+            const length = Math.min(edge, reach);
+            const steps = 4 + index % 3;
+            const bend = Math.sin(index * 17.13 + now * .0004) * 7;
+            ctx.beginPath();
+            ctx.moveTo(x + Math.cos(angle) * 3, y + Math.sin(angle) * 3);
+            for (let step = 1; step <= steps; step += 1) {
+                const distance = length * step / steps;
+                const offset = Math.sin(step * 7.9 + index * 3.1) * bend * (step / steps);
+                ctx.lineTo(x + Math.cos(angle) * distance + Math.cos(angle + Math.PI / 2) * offset,
+                    y + Math.sin(angle) * distance + Math.sin(angle + Math.PI / 2) * offset);
+            }
+            ctx.strokeStyle = index % 4 === 0
+                ? `rgba(249, 231, 255, ${intensity * .86})`
+                : `rgba(173, 105, 224, ${intensity * .58})`;
+            ctx.lineWidth = index % 4 === 0 ? 1.5 : .7;
+            ctx.stroke();
+
+            if (index % 2 === 0 && length > 100) {
+                const branchAt = length * (.36 + (index % 3) * .11);
+                const bx = x + Math.cos(angle) * branchAt;
+                const by = y + Math.sin(angle) * branchAt;
+                const branchAngle = angle + (index % 4 < 2 ? 1 : -1) * (.42 + (index % 3) * .18);
+                ctx.beginPath();
+                ctx.moveTo(bx, by);
+                ctx.lineTo(bx + Math.cos(branchAngle) * length * .22, by + Math.sin(branchAngle) * length * .22);
+                ctx.lineWidth = .6;
+                ctx.strokeStyle = `rgba(205, 165, 245, ${intensity * .52})`;
+                ctx.stroke();
+            }
+        }
+
+        for (let wave = 0; wave < 2; wave += 1) {
+            const waveProgress = Math.max(0, Math.min(1, progress * 1.4 - wave * .18));
+            const ringRadius = 8 + waveProgress * Math.max(this.width, this.height) * .66;
+            ctx.beginPath();
+            ctx.ellipse(x, y, ringRadius, ringRadius * .38, -.12, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(216, 177, 255, ${(1 - waveProgress) * intensity * .48})`;
+            ctx.lineWidth = 2.4 - wave * .55;
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(x, y);
+        this.drawParticles(now, "fracture", progress, radius * .35);
+        ctx.restore();
+        const flash = Math.pow(Math.max(0, Math.sin(progress * Math.PI * 2.2)), 18) * intensity;
+        if (flash > .025) {
+            ctx.fillStyle = `rgba(235, 216, 255, ${flash * .22})`;
+            ctx.fillRect(0, 0, this.width, this.height);
+        }
+    }
+
+    rayLength(angle) {
+        const { x, y } = this.center;
+        const dx = Math.cos(angle);
+        const dy = Math.sin(angle);
+        const horizontal = dx > 0 ? (this.width - x) / dx : dx < 0 ? -x / dx : Infinity;
+        const vertical = dy > 0 ? (this.height - y) / dy : dy < 0 ? -y / dy : Infinity;
+        return Math.min(horizontal, vertical);
+    }
+
+    drawLensing(now, strength) {
+        const ctx = this.ctx;
+        const { x, y } = this.center;
+        const radius = this.radius;
+        const pulse = 1 + Math.sin(now * .0031) * .018;
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        const aura = ctx.createRadialGradient(x, y, radius * .12, x, y, radius * 2.6);
+        aura.addColorStop(0, `rgba(83, 24, 133, ${.12 * strength})`);
+        aura.addColorStop(.24, `rgba(98, 37, 151, ${.055 * strength})`);
+        aura.addColorStop(1, "rgba(26, 8, 41, 0)");
+        ctx.fillStyle = aura;
+        const auraReach = radius * 2.6;
+        const left = Math.max(0, x - auraReach);
+        const top = Math.max(0, y - auraReach);
+        const right = Math.min(this.width, x + auraReach);
+        const bottom = Math.min(this.height, y + auraReach);
+        ctx.fillRect(left, top, right - left, bottom - top);
+
+        ctx.translate(x, y);
+        ctx.lineWidth = 1;
+        for (let ring = 0; ring < 3; ring += 1) {
+            const ringRadius = radius * (.7 + ring * .24) * pulse;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, ringRadius, ringRadius * (.42 + ring * .025), 0, .14 + ring * .09, Math.PI * 1.82);
+            ctx.strokeStyle = `rgba(176, 119, 220, ${(.15 - ring * .021) * strength})`;
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    drawHole(scale, now, mode, progress) {
+        const ctx = this.ctx;
+        const shellScale = mode === "collapse" ? this.collapseShell(progress) : scale;
+        const horizonScale = mode === "collapse" ? this.collapseCore(progress) : scale;
+        const radius = Math.max(1, this.radius * shellScale);
+        const horizonRadius = Math.max(.1, this.radius * .225 * horizonScale);
+        const { x, y } = this.center;
+        const pull = mode === "consume" ? progress : mode === "collapse" ? progress : 0;
+
+        ctx.save();
+        ctx.translate(x, y);
+        this.drawParticles(now, mode, progress, radius);
+        this.drawDiskSprite(radius, false, now, mode, progress);
+        this.drawPhotonLensing(radius, now);
+        this.drawHorizon(horizonRadius, now, mode);
+        this.drawDiskSprite(radius, true, now, mode, progress);
+        this.drawEnergyArcs(radius, now, mode === "collapse" ? .86 : mode === "emerge" ? .68 : .35);
+
+        if (pull > 0) this.drawInfallStreaks(radius, now, pull);
+        ctx.restore();
+    }
+
+    drawPhotonLensing(radius, now) {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        const glow = ctx.createRadialGradient(0, 0, radius * .22, 0, 0, radius * .48);
+        glow.addColorStop(0, "rgba(0, 0, 0, 0)");
+        glow.addColorStop(.66, "rgba(65, 20, 96, .12)");
+        glow.addColorStop(.81, "rgba(214, 176, 250, .54)");
+        glow.addColorStop(.88, "rgba(255, 247, 255, .88)");
+        glow.addColorStop(.94, "rgba(130, 66, 180, .24)");
+        glow.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, radius * .48, radius * .2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        for (let arc = 0; arc < 3; arc += 1) {
+            const orbit = radius * (.37 + arc * .036);
+            const drift = Math.sin(now * .00024 + arc * 1.7) * .055;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, orbit, orbit * .39, 0, .16 + arc * 1.7 + drift, 1.16 + arc * 1.7 + drift);
+            ctx.strokeStyle = arc === 1 ? "rgba(255, 247, 255, .92)" : "rgba(202, 158, 243, .64)";
+            ctx.lineWidth = radius * (.008 - arc * .0015);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    drawHorizon(coreRadius, now, mode) {
+        const ctx = this.ctx;
+        const breathing = 1 + Math.sin(now * .0012) * .012 + Math.sin(now * .00039 + .8) * .009;
+        const core = coreRadius * breathing;
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.beginPath();
+        for (let point = 0; point <= 36; point += 1) {
+            const angle = point / 36 * Math.PI * 2;
+            const ripple = Math.sin(angle * 3 + now * .00072) * core * .014 + Math.cos(angle * 5 - now * .00043) * core * .009;
+            const edge = core * (1.08 + ripple / core);
+            const px = Math.cos(angle) * edge;
+            const py = Math.sin(angle) * edge;
+            if (point === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = `rgba(216, 181, 255, ${.52 + Math.sin(now * .0008) * .12})`;
+        ctx.lineWidth = Math.max(1, core * .04);
+        ctx.stroke();
+        ctx.restore();
+
+        const voidFill = ctx.createRadialGradient(-core * .16, -core * .2, core * .04, 0, 0, core * 1.18);
+        voidFill.addColorStop(0, "#030106");
+        voidFill.addColorStop(.68, "#010003");
+        voidFill.addColorStop(.9, "#000");
+        voidFill.addColorStop(1, "rgba(0, 0, 0, .04)");
+        ctx.fillStyle = voidFill;
+        ctx.beginPath();
+        ctx.arc(0, 0, core * 1.18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(0, 0, core, 0, Math.PI * 2);
+        ctx.fillStyle = "#000";
+        ctx.fill();
+    }
+
+    drawParticles(now, mode, progress, radius) {
+        const ctx = this.ctx;
+        const pull = mode === "consume" ? progress * .92 : mode === "collapse" ? .96 : 0;
+        const acceleration = mode === "consume" ? progress : mode === "collapse" ? .92 + progress * .08 : 0;
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        for (const particle of this.particles) {
+            let distance = radius * (.56 + particle.orbit * .42);
+            if (mode === "fracture") distance *= .2 + progress * .64;
+            else if (mode === "emerge") distance *= 1.08 - progress * .08;
+            else distance *= 1 - .94 * Math.pow(acceleration, 1.8);
+            const angle = particle.angle + now * .00016 * particle.speed * (1 + acceleration * .8);
+            const wobble = Math.sin(now * .0008 + particle.seed) * radius * .008;
+            const px = Math.cos(angle) * Math.max(1, distance) + wobble;
+            const py = Math.sin(angle) * Math.max(1, distance) * .36;
+            const size = particle.size * Math.max(.12, Math.min(1, radius / 180));
+            const alpha = mode === "fracture" ? .25 + progress * .72 : .38 + Math.sin(particle.seed + now * .0012) * .14;
+            ctx.beginPath();
+            ctx.moveTo(px - Math.sin(angle) * size * 3, py + Math.cos(angle) * size * 1.1);
+            ctx.lineTo(px, py);
+            ctx.strokeStyle = `rgba(221, 190, 255, ${alpha})`;
+            ctx.lineWidth = size * .7;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(px, py, size * .55, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(250, 239, 255, ${alpha})`;
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    drawEnergyArcs(radius, now, intensity) {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        for (let bolt = 0; bolt < 5; bolt += 1) {
+            const cycle = (now * .0012 + bolt * .287) % 1;
+            const flash = Math.pow(Math.max(0, Math.sin(cycle * Math.PI)), 20) * intensity;
+            if (flash < .025) continue;
+
+            const angle = bolt * Math.PI * 2 / 5 + Math.sin(now * .00035 + bolt) * .07;
+            const inner = radius * (.82 + (bolt % 3) * .035);
+            const outer = radius * (1.06 + (bolt % 2) * .16);
+            const steps = 5;
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(angle) * inner, Math.sin(angle) * inner * .44);
+            for (let step = 1; step <= steps; step += 1) {
+                const t = step / steps;
+                const reach = inner + (outer - inner) * t;
+                const jitter = Math.sin(bolt * 13.1 + step * 8.7 + Math.floor(now / 55)) * radius * .025 * t;
+                ctx.lineTo(Math.cos(angle) * reach + Math.cos(angle + Math.PI / 2) * jitter,
+                    Math.sin(angle) * reach * .44 + Math.sin(angle + Math.PI / 2) * jitter);
+            }
+            ctx.strokeStyle = `rgba(236, 211, 255, ${flash})`;
+            ctx.lineWidth = Math.max(1, radius * .006);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    drawInfallStreaks(radius, now, progress) {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.lineCap = "round";
+        for (let streak = 0; streak < 12; streak += 1) {
+            const angle = streak * 2.399 + now * .00012 * (1 + progress * 1.2);
+            const outer = radius * (.68 + (streak % 7) * .039);
+            const inner = Math.max(radius * .25, outer * (1 - progress * .72));
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(angle - .18) * outer, Math.sin(angle - .18) * outer * .34);
+            ctx.quadraticCurveTo(Math.cos(angle) * outer * .72, Math.sin(angle) * outer * .24,
+                Math.cos(angle + .12) * inner, Math.sin(angle + .12) * inner * .34);
+            ctx.strokeStyle = `rgba(210, 169, 248, ${.08 + progress * .35})`;
+            ctx.lineWidth = radius * (.003 + (streak % 4) * .001);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    drawImplosion(progress) {
+        const ctx = this.ctx;
+        const { x, y } = this.center;
+        const maxRadius = Math.max(this.width, this.height) * .8;
+        const waveRadius = maxRadius * (1 - progress);
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.beginPath();
+        ctx.ellipse(x, y, waveRadius, waveRadius * .34, -.12, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(222, 185, 255, ${.14 + progress * .45})`;
+        ctx.lineWidth = 1 + progress * 7;
+        ctx.stroke();
+
+        if (progress > .84) {
+            const flash = Math.max(0, 1 - Math.abs(progress - .94) / .06);
+            const flare = ctx.createRadialGradient(x, y, 0, x, y, this.radius * (.3 + flash * .5));
+            flare.addColorStop(0, `rgba(255, 250, 255, ${flash * .98})`);
+            flare.addColorStop(.16, `rgba(228, 196, 255, ${flash * .72})`);
+            flare.addColorStop(1, "rgba(135, 62, 201, 0)");
+            ctx.fillStyle = flare;
+            ctx.fillRect(x - this.radius, y - this.radius, this.radius * 2, this.radius * 2);
+        }
+        ctx.restore();
+    }
+}
+
+const cinematic = new CinematicAbility(document.getElementById("cinematicCanvas"));
+let gravitationalPullAnimations = [];
+
+function stopGravitationalSuction() {
+    gravitationalPullAnimations.forEach((animation) => animation.cancel());
+    gravitationalPullAnimations = [];
+}
+
+function startGravitationalSuction(centerX, centerY) {
+    stopGravitationalSuction();
+    const targets = [
+        document.getElementById("topHeader"),
+        document.getElementById("introLamp"),
+        document.querySelector("#loginScreen .login-card"),
+        document.querySelector("#loginScreen h2"),
+        document.querySelector("#loginScreen .sub"),
+        ...document.querySelectorAll("#loginScreen .field label, #loginScreen .input-icon"),
+        document.getElementById("loginSubmitBtn"),
+        document.getElementById("loginMsg"),
+        document.querySelector("#pullCord .cord-inner"),
+    ].filter(Boolean);
+
+    gravitationalPullAnimations = targets.map((element, index) => {
+        const bounds = element.getBoundingClientRect();
+        const originX = bounds.left + bounds.width / 2;
+        const originY = bounds.top + bounds.height / 2;
+        const vectorX = originX - centerX;
+        const vectorY = originY - centerY;
+        const distance = Math.max(1, Math.hypot(vectorX, vectorY));
+        const direction = 1;
+        const turn = (2.02 + index % 4 * .105) * direction;
+        const axisX = Math.max(-.7, Math.min(.7, -vectorY / distance * .7));
+        const axisY = Math.max(-.7, Math.min(.7, vectorX / distance * .7));
+        const stretch = .12 + index % 4 * .035;
+        const keyframes = Array.from({ length: 25 }, (_, frame) => {
+            const time = frame / 24;
+            const progress = Math.pow(time, 1.36);
+            const angle = turn * progress;
+            const radial = 1 - .994 * progress;
+            const destinationX = vectorX * Math.cos(angle) - vectorY * Math.sin(angle);
+            const destinationY = vectorX * Math.sin(angle) + vectorY * Math.cos(angle);
+            const depth = 1130 * Math.pow(progress, 1.2);
+            const scale = 1 - .97 * Math.pow(progress, 1.24);
+            const crossStretch = 1 + Math.sin(angle) * stretch * progress;
+            const radialStretch = Math.max(.035, 1 - progress * (.34 + index % 3 * .045));
+            const fade = Math.max(0, Math.min(1, (time - .79) / .21));
+            const fadeEase = fade * fade * (3 - 2 * fade);
+
+            return {
+                offset: time,
+                transform: `translate3d(${(destinationX * radial - vectorX).toFixed(1)}px, ${(destinationY * radial - vectorY).toFixed(1)}px, ${depth.toFixed(1)}px) rotate3d(${axisX.toFixed(3)}, ${axisY.toFixed(3)}, 1, ${(angle * 57.3).toFixed(1)}deg) skew(${(Math.sin(angle) * stretch * 12).toFixed(2)}deg, ${(Math.cos(angle) * stretch * 7).toFixed(2)}deg) scale3d(${(scale * crossStretch).toFixed(4)}, ${(scale * radialStretch).toFixed(4)}, ${(1 - progress * .55).toFixed(4)})`,
+                opacity: 1 - fadeEase,
+            };
+        });
+
+        return element.animate(keyframes, { duration: 2850, easing: "linear", fill: "forwards" });
+    });
+}
+
+// True only for a login that just happened via the form (as opposed to
+// Firebase silently restoring a previous session on page load) — that's
+// what decides whether the flicker/vortex cinematic plays at all.
+let pendingCinematicLogin = false;
+let loginFlickerPromise = Promise.resolve();
+
+function revealDashboardUI(user) {
+    preAuthScene.style.display = "none";
+    stopGravitationalSuction();
+    cinematic.stop();
+    document.body.classList.remove("lit");
+    document.getElementById("topHeader").style.visibility = "";
+    dashboard.style.display = "block";
+    const sceneLocked = preAuthScene.inert;
+    window.requestAnimationFrame(() => {
+        document.body.classList.add("dashboard-active");
+        if (sceneLocked) {
+            const unlock = (event) => {
+                if (event && (event.target !== dashboard || event.propertyName !== "opacity")) return;
+                dashboard.removeEventListener("transitionend", unlock);
+                window.clearTimeout(unlockTimer);
+                preAuthScene.inert = false;
+            };
+            const unlockTimer = window.setTimeout(() => unlock(), 1000);
+            dashboard.addEventListener("transitionend", unlock);
+        }
+    });
+    userBadge.innerHTML = `
+        <span>${user.email}</span>
+        <button class="btn btn-ghost" id="logoutBtn">Log Out</button>
+    `;
+    document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth));
+}
+
+let flickerTimer = 0;
+let flickerGeneration = 0;
+let flickerResolve = null;
+
+function stopLoginFlicker() {
+    flickerGeneration += 1;
+    window.clearTimeout(flickerTimer);
+    flickerTimer = 0;
+    document.body.classList.remove("portal-flicker");
+    document.body.style.removeProperty("--lamp-flicker");
+    document.body.style.removeProperty("--lamp-bloom");
+    document.body.style.removeProperty("--ambient-flicker");
+    const resolve = flickerResolve;
+    flickerResolve = null;
+    resolve?.();
+}
+
+function finishLoginFlicker(generation) {
+    if (generation !== flickerGeneration) return;
+
+    const resolve = flickerResolve;
+    flickerResolve = null;
+    resolve?.();
+
+    const aftershock = () => {
+        if (generation !== flickerGeneration) return;
+
+        const variation = Math.random();
+        const blackout = variation < .16;
+        const unstable = variation < .48;
+        const level = blackout ? Math.random() * .02 : unstable ? .08 + Math.random() * .28 : .82 + Math.random() * .18;
+        document.body.style.setProperty("--lamp-flicker", level.toFixed(3));
+        document.body.style.setProperty("--lamp-bloom", (blackout ? .4 : 1.08 + level * .56 + Math.random() * .3).toFixed(2));
+        document.body.style.setProperty("--ambient-flicker", (level * (.18 + Math.random() * .32)).toFixed(3));
+        flickerTimer = window.setTimeout(() => {
+            if (generation !== flickerGeneration) return;
+            document.body.style.setProperty("--lamp-flicker", "1");
+            document.body.style.setProperty("--lamp-bloom", "1");
+            document.body.style.setProperty("--ambient-flicker", ".08");
+            flickerTimer = window.setTimeout(aftershock, 28 + Math.random() * 118);
+        }, blackout ? 22 + Math.random() * 48 : unstable ? 32 + Math.random() * 62 : 48 + Math.random() * 92);
+    };
+    flickerTimer = window.setTimeout(aftershock, 180 + Math.random() * 240);
+}
+
+function startLoginFlicker() {
+    stopLoginFlicker();
+    if (prefersReducedMotion) return Promise.resolve();
+
+    const generation = flickerGeneration;
+    return new Promise((resolve) => {
+        flickerResolve = resolve;
+        flickerTimer = window.setTimeout(() => {
+            if (generation !== flickerGeneration) return;
+
+            document.body.classList.add("portal-flicker");
+            const flickerEndsAt = performance.now() + 1850;
+            const flickerBeat = () => {
+                if (generation !== flickerGeneration) return;
+                const remaining = flickerEndsAt - performance.now();
+                if (remaining <= 0) {
+                    finishLoginFlicker(generation);
+                    return;
+                }
+
+                const variation = Math.random();
+                const level = variation < .19
+                    ? Math.random() * .018
+                    : variation < .57
+                        ? .025 + Math.random() * .22
+                        : .68 + Math.random() * .32;
+                const bloom = .24 + level * 1.24 + Math.random() * .46;
+
+                document.body.style.setProperty("--lamp-flicker", level.toFixed(3));
+                document.body.style.setProperty("--lamp-bloom", bloom.toFixed(2));
+                document.body.style.setProperty("--ambient-flicker", (level * (.12 + Math.random() * .38)).toFixed(3));
+
+                const interval = variation < .19
+                    ? 88 + Math.random() * 210
+                    : variation < .57
+                        ? 16 + Math.random() * 72
+                        : 34 + Math.random() * 172;
+                flickerTimer = window.setTimeout(flickerBeat, Math.min(interval, remaining));
+            };
+            flickerBeat();
+        }, 180);
+    });
+}
+
+function positionVortexAtLogin() {
+    const cardRect = loginScreen.querySelector(".login-card").getBoundingClientRect();
+    const wrapRect = document.querySelector(".wrap").getBoundingClientRect();
+    const centerX = cardRect.left + cardRect.width / 2;
+    const centerY = cardRect.top + cardRect.height / 2;
+
+    cinematic.setCenter(centerX, centerY);
+    document.body.style.setProperty("--world-origin", `${centerX - wrapRect.left}px ${centerY - wrapRect.top}px`);
+    document.body.style.setProperty("--rift-x", `${centerX / window.innerWidth * 100}%`);
+    document.body.style.setProperty("--rift-y", `${centerY / window.innerHeight * 100}%`);
+}
+
+async function playLoginSuccessSequence(user, gameDataReady) {
+    const body = document.body;
+    await loginFlickerPromise;
+
+    if (prefersReducedMotion) {
+        // No strobing, no spinning vortex for anyone who has asked their
+        // system to reduce motion — just a quick, plain reveal.
+        await wait(150);
+        await gameDataReady;
+        revealDashboardUI(user);
+        stopLoginFlicker();
+        loginSubmitBtn.classList.remove("is-loading", "sweep-now");
+        loginSubmitBtn.disabled = false;
+        return;
+    }
+
+    positionVortexAtLogin();
+    body.classList.add("portal-fracture", "portal-impact");
+    cinematic.setPhase("fracture", 780);
+    await wait(780);
+    stopLoginFlicker();
+    body.classList.remove("portal-fracture", "portal-impact");
+
+    body.classList.add("portal-open");
+    cinematic.setPhase("emerge", 1900);
+    await wait(1900);
+    cinematic.setPhase("dominance", 1000);
+    await wait(1000);
+
+    body.classList.add("portal-sucking");
+    startGravitationalSuction(cinematic.center.x, cinematic.center.y);
+    cinematic.setPhase("consume", 2850);
+    await wait(2900);
+    cinematic.setPhase("dominance", 1200);
+    await wait(1200);
+
+    await gameDataReady;
+
+    body.classList.add("portal-closing");
+    cinematic.setPhase("collapse", 1080);
+    await wait(1120);
+    cinematic.stop();
+    preAuthScene.style.display = "none";
+    document.getElementById("topHeader").style.visibility = "hidden";
+    stopGravitationalSuction();
+    body.classList.remove("portal-sucking", "portal-open", "portal-closing", "portal-impact", "portal-fracture");
+    await wait(220);
+    document.getElementById("topHeader").style.visibility = "";
+    revealDashboardUI(user);
+    await wait(820);
+    stopLoginFlicker();
+
+    // 5. Clean up so classes don't linger for the next login (e.g. after
+    //    a future log out / log back in in the same tab)
+    ["--world-origin", "--rift-x", "--rift-y"]
+        .forEach((property) => body.style.removeProperty(property));
+    loginSubmitBtn.classList.remove("is-loading", "sweep-now");
+    loginSubmitBtn.disabled = false;
+}
+
+loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    preAuthScene.inert = true;
+    loginMsg.textContent = "";
+    loginMsg.className = "msg";
+
+    // Replay the shine-sweep on click (covers touch/keyboard activation,
+    // which never trigger :hover), then switch the button into its
+    // loading state — a rotating border trace + pulsing dots instead of
+    // any "logging in" text.
+    loginSubmitBtn.classList.remove("sweep-now");
+    void loginSubmitBtn.offsetWidth; // restart the animation
+    loginSubmitBtn.classList.add("sweep-now");
+    loginSubmitBtn.classList.add("is-loading");
+    loginSubmitBtn.disabled = true;
+    loginFlickerPromise = startLoginFlicker();
+
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value;
+
+    try {
+        pendingCinematicLogin = true;
+        // Keep the loading dots briefly visible without delaying the fracture.
+        await Promise.all([
+            signInWithEmailAndPassword(auth, email, password),
+            wait(820),
+        ]);
+        // The rest of the sequence starts when Firebase confirms the session.
+    } catch (err) {
+        pendingCinematicLogin = false;
+        stopLoginFlicker();
+        preAuthScene.inert = false;
+        loginSubmitBtn.classList.remove("is-loading", "sweep-now");
+        loginSubmitBtn.disabled = false;
+        loginMsg.textContent = "Login failed: " + err.message;
+        loginMsg.className = "msg error";
+    }
+});
+
+// ---- Auth state ----
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        renderGamePanel("hok");
+        renderGamePanel("mlbb");
+        const gameDataReady = Promise.allSettled([loadGameData("hok"), loadGameData("mlbb")]).then((results) => {
+            results.forEach((result, index) => {
+                if (result.status === "rejected") {
+                    console.error(`Could not load ${index === 0 ? "HOK" : "MLBB"} bracket data:`, result.reason);
+                }
+            });
+        });
+
+        if (pendingCinematicLogin) {
+            pendingCinematicLogin = false;
+            await playLoginSuccessSequence(user, gameDataReady);
+        } else {
+            // A previous session was restored on page load — no form was
+            // submitted, so skip straight to the dashboard, no fanfare.
+            await gameDataReady;
+            revealDashboardUI(user);
+        }
+    } else {
+        stopLoginFlicker();
+        stopGravitationalSuction();
+        cinematic.stop();
+        preAuthScene.style.display = "";
+        document.body.classList.remove(
+            "lit", "dashboard-active",
+            "portal-flicker", "portal-fracture", "portal-impact",
+            "portal-sucking", "portal-open", "portal-closing"
+        );
+        loginScreen.style.display = "block";
+        dashboard.style.display = "none";
+        userBadge.innerHTML = "";
+        loginSubmitBtn.classList.remove("is-loading", "sweep-now");
+        loginSubmitBtn.disabled = false;
+    }
+});
+</script>
+
+</body>
+</html>
